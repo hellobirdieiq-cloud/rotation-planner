@@ -1070,3 +1070,65 @@ body {
   outline-offset: -1px;
   border-color: var(--color-primary);
 }
+
+.lineup-view-toggle {
+  display: inline-flex;
+  gap: 0;
+  margin: 0 var(--space-md) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+.lineup-view-toggle .view-toggle-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: var(--space-sm) var(--space-md);
+  font: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.lineup-view-toggle .view-toggle-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.player-grid-wrap {
+  margin: 0 var(--space-md) var(--space-md);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.player-grid {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95rem;
+}
+.player-grid th,
+.player-grid td {
+  border: 1px solid var(--color-border);
+  padding: var(--space-xs) var(--space-sm);
+  text-align: center;
+  white-space: nowrap;
+}
+.player-grid thead th {
+  background: var(--color-bg-secondary);
+  font-weight: 600;
+}
+.player-grid .player-grid-name {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: var(--color-bg);
+  z-index: 1;
+  font-weight: 500;
+}
+.player-grid .player-grid-corner {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  text-align: left;
+}
+.player-grid .player-grid-cell.cell-manual {
+  border-left: 3px solid var(--color-primary);
+}

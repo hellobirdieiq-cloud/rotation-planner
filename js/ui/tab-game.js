@@ -11,6 +11,7 @@ import { showToast, renderWarningPanel } from './toast.js';
 // Persists in DOM only (until Update Lineup is tapped).
 let pendingPresent = null;
 let mountEl = null;
+let viewMode = 'player';
 // Collapsible-section state. null = uninitialized; once set, persists across refreshes.
 // Default rule: expanded before first Update Lineup; auto-collapsed after Update Lineup.
 let availabilityExpanded = null;
@@ -74,7 +75,14 @@ function renderHtml() {
       </div>
     </details>
 
-    ${ag ? renderInningCards(ag) : '<div class="placeholder"><strong>No lineup yet</strong>Tap Update Lineup to create one.</div>'}
+    ${ag ? `
+      <div class="lineup-view-toggle" role="tablist" aria-label="Lineup view">
+        <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">By Player</button>
+        <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">By Position</button>
+      </div>
+    ` : ''}
+
+    ${ag ? (viewMode === 'player' ? renderPlayerGrid(ag) : renderInningCards(ag)) : '<div class="placeholder"><strong>No lineup yet</strong>Tap Update Lineup to create one.</div>'}
 
     <div class="game-bottom-bar">
       <button class="btn-bottom" type="button" data-action="update">Update Lineup</button>
@@ -100,6 +108,42 @@ function renderInningCards(ag) {
   return `
     <div id="warning-mount"></div>
     <div class="inning-columns">${ag.schedule.map((inn) => renderInningCard(ag, inn)).join('')}</div>
+  `;
+}
+
+function renderPlayerGrid(ag) {
+  const innings = ag.schedule || [];
+  const rows = (ag.presentPlayers || []).map((pid) => {
+    const cells = innings.map((inn) => {
+      const cell = inn.cells[pid];
+      const assignment = cell && cell.assignment ? cell.assignment : '—';
+      const lockIcon = cell && cell.locked ? '🔒 ' : '';
+      const manualClass = cell && cell.manual ? ' cell-manual' : '';
+      return `<td class="player-grid-cell${manualClass}">${lockIcon}${esc(assignment)}</td>`;
+    }).join('');
+    return `
+      <tr>
+        <th scope="row" class="player-grid-name">${esc(nameOf(ag, pid))}</th>
+        ${cells}
+      </tr>
+    `;
+  }).join('');
+
+  const headerCells = innings.map((inn) => `<th scope="col">${inn.index + 1}</th>`).join('');
+
+  return `
+    <div id="warning-mount"></div>
+    <div class="player-grid-wrap">
+      <table class="player-grid">
+        <thead>
+          <tr>
+            <th scope="col" class="player-grid-corner">Player</th>
+            ${headerCells}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
   `;
 }
 
@@ -187,6 +231,17 @@ function bind() {
       if (summaryEl) summaryEl.textContent = `${present} present · ${sitting} sitting`;
       const metaEl = mountEl.querySelector('#availability-meta');
       if (metaEl) metaEl.textContent = `(${present} ${present === 1 ? 'player' : 'players'})`;
+    });
+  });
+
+  // View-mode toggle (player grid vs inning cards).
+  mountEl.querySelectorAll('.view-toggle-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.view;
+      if (next && next !== viewMode) {
+        viewMode = next;
+        refresh();
+      }
     });
   });
 
