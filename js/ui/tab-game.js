@@ -8,11 +8,11 @@ import { openSheet, closeSheet } from './bottom-sheet.js';
 import { showToast, renderWarningPanel } from './toast.js';
 
 // Module-local state for pre-game availability checkboxes.
-// Persists in DOM only (until Generate is tapped).
+// Persists in DOM only (until Update Lineup is tapped).
 let pendingPresent = null;
 let mountEl = null;
 // Collapsible-section state. null = uninitialized; once set, persists across refreshes.
-// Default rule: expanded before first Generate; auto-collapsed after Generate.
+// Default rule: expanded before first Update Lineup; auto-collapsed after Update Lineup.
 let availabilityExpanded = null;
 
 export function mountGameTab(container) {
@@ -24,7 +24,7 @@ export function mountGameTab(container) {
 
 function initAvailabilityExpanded() {
   if (availabilityExpanded !== null) return;        // preserve user's manual choice across refreshes
-  availabilityExpanded = !getActiveGame();           // expanded only before first Generate
+  availabilityExpanded = !getActiveGame();           // expanded only before first Update Lineup
 }
 
 function initPendingPresent() {
@@ -79,7 +79,7 @@ function renderHtml() {
     <div class="game-bottom-bar">
       <button class="btn-bottom" type="button" data-action="update">Update Lineup</button>
       <button class="btn-bottom" type="button" data-action="save"${ag ? '' : ' disabled'}>Save</button>
-      <button class="btn-bottom" type="button" data-action="new-game"${ag ? '' : ' disabled'}>New Game</button>
+      <button class="btn-bottom" type="button" data-action="new-game"${ag ? '' : ' disabled'}>Restart Game</button>
     </div>
   `;
 }
@@ -286,7 +286,7 @@ function handleUpdateLineup() {
 }
 
 function handleStartNewGame() {
-  if (!confirm('Start a new game? This clears the current active game only. Your roster and saved games will stay.')) return;
+  if (!confirm('Restart this game? This will clear the lineup, completed innings, and locked players.')) return;
   setActiveGame(null);
   initPendingPresent();
   availabilityExpanded = true;
@@ -296,7 +296,7 @@ function handleStartNewGame() {
 function handleSaveGame() {
   const ag = getActiveGame();
   if (!ag) {
-    showToast('Generate a lineup first.', { variant: 'danger', dismissible: true });
+    showToast('Update the lineup first.', { variant: 'danger', dismissible: true });
     return;
   }
   const saved = getSavedGames().slice();
