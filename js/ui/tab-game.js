@@ -24,7 +24,9 @@ const POSITION_LABELS = {
 // Persists in DOM only (until Update Lineup is tapped).
 let pendingPresent = null;
 let mountEl = null;
+const VIEW_MODE_STORAGE_KEY = 'rotation:viewMode';
 let viewMode = 'player';
+let viewModeRestored = false;
 // Collapsible-section state. null = uninitialized; once set, persists across refreshes.
 // Default rule: expanded before first Update Lineup; auto-collapsed after Update Lineup.
 let availabilityExpanded = null;
@@ -60,8 +62,23 @@ function refresh() {
   bind();
 }
 
+function ensureViewModeRestored(ag) {
+  if (viewModeRestored || !ag) return;
+  let stored = null;
+  try { stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY); } catch (e) { /* storage unavailable */ }
+  if (stored === 'player' || stored === 'position') {
+    viewMode = stored;
+  } else if ((ag.completedInnings || []).length > 0) {
+    viewMode = 'position';
+  } else {
+    viewMode = 'player';
+  }
+  viewModeRestored = true;
+}
+
 function renderHtml() {
   const ag = getActiveGame();
+  ensureViewModeRestored(ag);
   const roster = getRoster();
   const active = Object.values(roster).filter((p) => !p.archived).sort(byName);
   const presentCount = active.filter((p) => pendingPresent[p.id] !== false).length;
@@ -90,8 +107,8 @@ function renderHtml() {
 
     ${ag ? `
       <div class="lineup-view-toggle" role="tablist" aria-label="Lineup view">
-        <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">By Inning</button>
-        <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">By Position</button>
+        <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">All Innings</button>
+        <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">This Inning</button>
       </div>
     ` : ''}
 
@@ -222,7 +239,7 @@ function renderInningCard(ag, inn) {
 
   const completeBtn = isCompleted
     ? `<button class="btn-secondary" type="button" data-action="unmark" data-inning="${inn.index}">✓ Complete · Unmark</button>`
-    : `<button class="btn-secondary" type="button" data-action="mark" data-inning="${inn.index}">Mark inning complete</button>`;
+    : `<button class="btn-secondary" type="button" data-action="mark" data-inning="${inn.index}">End Inning ${inn.index + 1}</button>`;
 
   return `
     <div class="inning-card${isCompleted ? ' completed' : ''}">
@@ -264,6 +281,8 @@ function bind() {
       const next = btn.dataset.view;
       if (next && next !== viewMode) {
         viewMode = next;
+        viewModeRestored = true;
+        try { localStorage.setItem(VIEW_MODE_STORAGE_KEY, next); } catch (e) { /* storage unavailable */ }
         refresh();
       }
     });
@@ -596,7 +615,7 @@ function openCellSheet(inning, position) {
   });
 
   openSheet({
-    // Title intentionally omitted — the in-body hero is the header now.
+    title: `Edit assignment — Inning ${inning + 1}, ${POSITION_LABELS[position] || position}`,
     content: wrap,
     actions: [{ label: 'Close', variant: '', handler: closeSheet }],
   });

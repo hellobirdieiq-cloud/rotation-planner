@@ -1129,7 +1129,8 @@ body {
 }
 .player-grid th,
 .player-grid td {
-  padding: 4px 6px;
+  padding: 14px 8px;
+  min-height: 44px;
   text-align: center;
   white-space: nowrap;
   border-bottom: 1px solid var(--color-border);
@@ -1190,6 +1191,8 @@ body {
   position: relative;
   border-radius: 6px;
   transition: background 0.12s, box-shadow 0.12s, transform 0.08s;
+  text-decoration: underline dotted rgba(37, 99, 235, 0.4);
+  text-underline-offset: 3px;
 }
 .player-grid-cell[data-inning][data-position]:hover {
   background: rgba(37, 99, 235, 0.14);
