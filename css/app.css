@@ -512,7 +512,7 @@ body {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
   scroll-snap-type: x proximity;
 }
 

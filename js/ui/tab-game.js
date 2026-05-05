@@ -256,14 +256,19 @@ function runGenerate() {
   const completedInnings = (oldGame && oldGame.completedInnings) ? oldGame.completedInnings : [];
   const nextIndex = existingSchedule.length;
 
-  // Don't generate ahead of the active inning: every already-generated inning
-  // must be marked complete before the next one can be added.
-  if (existingSchedule.length > 0 && completedInnings.length < existingSchedule.length) {
-    showToast('Complete current inning first.', { variant: 'danger', dismissible: true });
+  // Old games may already have a full 6-inning schedule. Treat "all innings
+  // generated" as a separate, friendlier case before asking the user to mark
+  // the active inning complete.
+  if (nextIndex >= totalInnings) {
+    showToast('This game already has all innings generated.', { variant: 'danger', dismissible: true });
     return;
   }
-  if (nextIndex >= totalInnings) {
-    showToast('All innings already generated.', { variant: 'danger', dismissible: true });
+  // Otherwise, only the LAST generated inning needs to be complete before the
+  // next one can be appended.
+  const lastGeneratedIndex = existingSchedule.length - 1;
+  const lastGeneratedComplete = completedInnings.includes(lastGeneratedIndex);
+  if (existingSchedule.length > 0 && !lastGeneratedComplete) {
+    showToast('Mark the current inning complete before generating the next inning.', { variant: 'danger', dismissible: true });
     return;
   }
 
