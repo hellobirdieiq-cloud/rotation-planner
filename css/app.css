@@ -695,6 +695,50 @@ body {
   margin-bottom: 14px;
   text-align: center;
 }
+.cell-sheet-lock-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, border-color 0.12s;
+}
+.cell-sheet-lock-row:hover { background: var(--color-bg-secondary); }
+.cell-sheet-lock-row:active { background: var(--color-bg-secondary); }
+.cell-sheet-lock-row.is-locked {
+  background: #fff8e1;
+  border-color: #f59e0b;
+}
+.cell-sheet-lock-row.is-locked:hover { background: #ffefc4; }
+.cell-sheet-lock-row-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.cell-sheet-lock-row-name { font-weight: 600; }
+.cell-sheet-lock-row-toggle {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.cell-sheet-lock-row.is-locked .cell-sheet-lock-row-toggle { color: #92400e; }
+.cell-sheet-lock-row-empty {
+  cursor: default;
+  color: var(--color-text-secondary);
+}
+.cell-sheet-lock-row-empty:hover { background: var(--color-bg); }
 .cell-sheet-current-name {
   font-weight: 500;
   color: var(--color-text);
@@ -757,13 +801,11 @@ body {
   color: var(--color-text-tertiary);
 }
 .cell-sheet-section .player-chips + .cell-sheet-group-label {
-  border-top: 1px solid var(--color-border);
-  padding-top: 12px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 .chip-name {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--color-text);
 }
 .chip-where {
@@ -781,6 +823,22 @@ body {
 .cell-actions .btn-secondary {
   flex: 1;
   padding: 10px;
+}
+.cell-sheet-send-bench {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  font-weight: 500;
+}
+.cell-sheet-send-bench:active { background: var(--color-bg); }
+.cell-sheet-send-bench:disabled {
+  opacity: 0.5;
+  cursor: default;
+  color: var(--color-text-tertiary);
 }
 
 /* === Pitch entry row === */

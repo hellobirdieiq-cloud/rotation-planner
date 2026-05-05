@@ -652,35 +652,32 @@ function openCellSheet(inning, position, targetPid = null) {
   });
 
   const chipsHtml = `
-    ${benchPids.length ? `<div class="cell-sheet-group-label">Bench</div><div class="player-chips player-chips-bench">${benchPids.map(renderChip).join('')}</div>` : ''}
-    ${fieldPids.length ? `<div class="cell-sheet-group-label">On Field</div><div class="player-chips">${fieldPids.map(renderChip).join('')}</div>` : ''}
+    ${benchPids.length ? `<div class="cell-sheet-group-label">Swap in from bench</div><div class="player-chips player-chips-bench">${benchPids.map(renderChip).join('')}</div>` : ''}
+    ${fieldPids.length ? `<div class="cell-sheet-group-label">Swap with a fielder</div><div class="player-chips">${fieldPids.map(renderChip).join('')}</div>` : ''}
   `;
 
-  const cellActionsHtml = currentPid ? `
-    <div class="cell-actions">
-      <button class="btn-secondary" type="button" data-action="toggle-lock">${isLocked ? '🔓 Unlock' : '🔒 Lock'}</button>
-      <button class="btn-secondary" type="button" data-action="clear"${currentCell && currentCell.assignment === 'BN' ? ' disabled' : ''}>Clear (→ BN)</button>
-    </div>
-  ` : '';
+  const sendBenchHtml = currentPid
+    ? `<button class="btn-secondary cell-sheet-send-bench" type="button" data-action="clear"${currentCell && currentCell.assignment === 'BN' ? ' disabled' : ''}>Send to bench</button>`
+    : '';
 
-  // Position-first hierarchy: the position is the visual focal point; the
-  // current player is secondary supporting context.
-  const currentLine = currentPid
-    ? `<div class="cell-sheet-current">Currently: <span class="cell-sheet-current-name">${esc(currentName)}</span>${isLocked ? ' 🔒' : ''}</div>`
-    : '<div class="cell-sheet-current cell-sheet-current-empty">No player assigned yet</div>';
+  const positionLabel = POSITION_LABELS[position] || position;
+  const lockRowHtml = currentPid
+    ? `<button class="cell-sheet-lock-row${isLocked ? ' is-locked' : ''}" type="button" data-action="toggle-lock">
+         <span class="cell-sheet-lock-row-text">
+           <span class="cell-sheet-lock-row-name">${esc(currentName)}</span> is ${esc(positionLabel)} — Inning ${inning + 1}
+         </span>
+         <span class="cell-sheet-lock-row-toggle">${isLocked ? '🔒 Locked' : '🔓 Lock'}</span>
+       </button>`
+    : `<div class="cell-sheet-lock-row cell-sheet-lock-row-empty">
+         <span class="cell-sheet-lock-row-text">No player assigned at ${esc(positionLabel)} — Inning ${inning + 1}</span>
+       </div>`;
 
   wrap.innerHTML = `
-    <div class="cell-sheet-hero">
-      <div class="cell-sheet-pos">${esc(POSITION_LABELS[position] || position)}</div>
-      <div class="cell-sheet-inning">Inning ${inning + 1}</div>
-      <div class="cell-sheet-helper">Assign a player to this position</div>
-    </div>
-    ${currentLine}
-    ${cellActionsHtml}
+    ${lockRowHtml}
     <div class="cell-sheet-section">
-      <div class="cell-sheet-label">Select a player</div>
       ${chipsHtml}
     </div>
+    ${sendBenchHtml}
   `;
 
   wrap.querySelectorAll('.player-chip[data-target-pid]:not([disabled])').forEach((chip) => {
