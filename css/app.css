@@ -1176,7 +1176,7 @@ body {
   min-width: 0;
   width: 1%;
 }
-.player-grid tbody tr:nth-child(even) > td:not(.player-grid-bench),
+.player-grid tbody tr:nth-child(even) > td,
 .player-grid tbody tr:nth-child(even) > th.player-grid-name {
   background: #f2f3f5;
 }
@@ -1192,16 +1192,28 @@ body {
 .player-grid-cell[data-inning][data-position] {
   cursor: pointer;
   position: relative;
+  border-radius: 6px;
+  transition: background 0.12s, box-shadow 0.12s, transform 0.08s;
 }
-.player-grid-cell[data-inning][data-position]:hover {
-  background: rgba(37, 99, 235, 0.08);
+.player-grid-cell[data-inning][data-position]:hover,
+.player-grid-cell[data-inning][data-position]:focus-visible {
+  background: rgba(37, 99, 235, 0.14);
+  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.35);
 }
 .player-grid-cell[data-inning][data-position]:active {
-  background: rgba(37, 99, 235, 0.14);
+  background: rgba(37, 99, 235, 0.22);
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+  transform: scale(0.98);
 }
-.player-grid-cell[data-inning][data-position]:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+.player-grid-cell[data-inning][data-position]:hover::after {
+  content: "Edit";
+  position: absolute;
+  right: 4px;
+  top: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--color-primary);
+  opacity: 0.85;
 }
 
 .cell-sheet-group-label {
