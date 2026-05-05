@@ -1182,9 +1182,8 @@ body {
 .player-grid .player-grid-cell.cell-manual {
   box-shadow: inset 3px 0 0 var(--color-primary);
 }
-.player-grid .player-grid-bench {
-  color: var(--color-text-tertiary);
-  background: var(--color-bg-secondary);
+.player-grid td.player-grid-bench {
+  background: transparent !important;
 }
 
 .cell-sheet-group-label {
