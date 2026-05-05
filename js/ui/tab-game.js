@@ -474,7 +474,7 @@ function openCellSheet(inning, position) {
 
   const wrap = document.createElement('div');
 
-  const chipsHtml = ag.presentPlayers.map((pid) => {
+  const renderChip = (pid) => {
     const where = inn.cells[pid] ? inn.cells[pid].assignment : 'BN';
     const lockedElsewhere = inn.cells[pid] && inn.cells[pid].locked && pid !== currentPid;
     const isCurrent = pid === currentPid;
@@ -484,7 +484,21 @@ function openCellSheet(inning, position) {
         <span class="chip-where">${lockedElsewhere ? '🔒 ' : ''}${esc(where)}</span>
       </button>
     `;
-  }).join('');
+  };
+
+  const benchPids = ag.presentPlayers.filter((pid) => {
+    const where = inn.cells[pid] ? inn.cells[pid].assignment : 'BN';
+    return where === 'BN';
+  });
+  const fieldPids = ag.presentPlayers.filter((pid) => {
+    const where = inn.cells[pid] ? inn.cells[pid].assignment : 'BN';
+    return where !== 'BN';
+  });
+
+  const chipsHtml = `
+    ${benchPids.length ? `<div class="cell-sheet-group-label">Bench</div><div class="player-chips">${benchPids.map(renderChip).join('')}</div>` : ''}
+    ${fieldPids.length ? `<div class="cell-sheet-group-label">On Field</div><div class="player-chips">${fieldPids.map(renderChip).join('')}</div>` : ''}
+  `;
 
   const cellActionsHtml = currentPid ? `
     <div class="cell-actions">
@@ -508,7 +522,7 @@ function openCellSheet(inning, position) {
     ${currentLine}
     <div class="cell-sheet-section">
       <div class="cell-sheet-label">Select a player</div>
-      <div class="player-chips">${chipsHtml}</div>
+      ${chipsHtml}
     </div>
     ${cellActionsHtml}
   `;

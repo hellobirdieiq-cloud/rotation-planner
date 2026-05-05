@@ -1142,3 +1142,14 @@ body {
   color: var(--color-text-tertiary);
   background: var(--color-bg-secondary);
 }
+
+.cell-sheet-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin: 8px 0 4px;
+}
+
+.cell-sheet-subsection + .cell-sheet-subsection {
+  margin-top: 8px;
+}
