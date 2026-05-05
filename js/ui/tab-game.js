@@ -483,12 +483,21 @@ function openCellSheet(inning, position) {
     </div>
   ` : '';
 
+  // Position-first hierarchy: the position is the visual focal point; the
+  // current player is secondary supporting context.
+  const currentLine = currentPid
+    ? `<div class="cell-sheet-current">Currently: <span class="cell-sheet-current-name">${esc(currentName)}</span>${isLocked ? ' 🔒' : ''}</div>`
+    : '<div class="cell-sheet-current cell-sheet-current-empty">No player assigned yet</div>';
+
   wrap.innerHTML = `
-    <div class="cell-sheet-header">
-      <div>Currently: <strong>${esc(currentName)}</strong>${isLocked ? ' 🔒' : ''}</div>
+    <div class="cell-sheet-hero">
+      <div class="cell-sheet-pos">${esc(position)}</div>
+      <div class="cell-sheet-inning">Inning ${inning + 1}</div>
+      <div class="cell-sheet-helper">Assign a player to this position</div>
     </div>
+    ${currentLine}
     <div class="cell-sheet-section">
-      <div class="cell-sheet-label">Change to:</div>
+      <div class="cell-sheet-label">Select a player</div>
       <div class="player-chips">${chipsHtml}</div>
     </div>
     ${cellActionsHtml}
@@ -535,7 +544,7 @@ function openCellSheet(inning, position) {
   });
 
   openSheet({
-    title: `Inning ${inning + 1} · ${position}`,
+    // Title intentionally omitted — the in-body hero is the header now.
     content: wrap,
     actions: [{ label: 'Close', variant: '', handler: closeSheet }],
   });
