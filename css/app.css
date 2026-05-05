@@ -1097,6 +1097,8 @@ body {
 .player-grid-wrap {
   margin: 0 var(--space-md) var(--space-md);
   overflow-x: auto;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  touch-action: pan-x;
   -webkit-overflow-scrolling: touch;
 }
 .player-grid {
