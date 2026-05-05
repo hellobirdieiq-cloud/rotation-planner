@@ -1017,3 +1017,42 @@ body {
 .settings-section .btn-primary {
   width: 100%;
 }
+.settings-subheading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-top: 18px;
+  margin-bottom: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+}
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.settings-actions .btn-secondary {
+  flex: 1;
+  padding: 10px 12px;
+}
+.backup-textarea {
+  width: 100%;
+  min-height: 120px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  resize: vertical;
+  margin-bottom: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.backup-textarea:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+  border-color: var(--color-primary);
+}
