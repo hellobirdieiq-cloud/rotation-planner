@@ -1183,7 +1183,21 @@ body {
   box-shadow: inset 3px 0 0 var(--color-primary);
 }
 .player-grid td.player-grid-bench {
-  background: transparent !important;
+  color: var(--color-text-tertiary);
+}
+.player-grid-cell[data-inning][data-position] {
+  cursor: pointer;
+  position: relative;
+}
+.player-grid-cell[data-inning][data-position]:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+.player-grid-cell[data-inning][data-position]:active {
+  background: rgba(37, 99, 235, 0.14);
+}
+.player-grid-cell[data-inning][data-position]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .cell-sheet-group-label {
