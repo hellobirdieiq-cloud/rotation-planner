@@ -1,6 +1,6 @@
 // Cache-first service worker with version-bumped cache name (AF10).
 // Bump CACHE_NAME on every release to force a fresh fetch of the app shell.
-const CACHE_NAME = 'rotation-planner-v0-2026-05-05';
+const CACHE_NAME = 'rotation-planner-2026-05-05-p3';
 
 const APP_SHELL = [
   './',
@@ -8,6 +8,19 @@ const APP_SHELL = [
   './manifest.webmanifest',
   './css/app.css',
   './js/app.js',
+  './js/store.js',
+  './js/id.js',
+  './js/positions.js',
+  './js/rules.js',
+  './js/generate.js',
+  './js/edit.js',
+  './js/rebalance.js',
+  './js/ui/bottom-sheet.js',
+  './js/ui/toast.js',
+  './js/ui/tab-players.js',
+  './js/ui/tab-game.js',
+  './js/ui/tab-game-summary.js',
+  './js/ui/tab-saved.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
