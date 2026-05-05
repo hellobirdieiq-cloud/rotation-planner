@@ -747,6 +747,20 @@ body {
   opacity: 0.55;
   cursor: not-allowed;
 }
+.player-chips-bench .player-chip {
+  background: var(--color-bg-secondary);
+}
+.player-chips-bench .chip-name {
+  color: var(--color-text-secondary);
+}
+.player-chips-bench .chip-where {
+  color: var(--color-text-tertiary);
+}
+.cell-sheet-section .player-chips + .cell-sheet-group-label {
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+  margin-top: 12px;
+}
 .chip-name {
   font-size: 14px;
   font-weight: 500;

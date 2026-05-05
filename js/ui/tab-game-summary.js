@@ -83,9 +83,9 @@ function renderSummary(ag) {
   const headers = `
     <th class="summary-name-col">Player</th>
     <th>BN</th>
-    ${POSITIONS.map((p) => `<th>${p}</th>`).join('')}
     <th>IF</th>
     <th>OF</th>
+    ${POSITIONS.map((p) => `<th>${p}</th>`).join('')}
     <th>Pitches</th>
   `;
   const rows = pids.map((pid) => {
@@ -95,9 +95,9 @@ function renderSummary(ag) {
       <tr>
         <td class="summary-name-col">${esc(nameOf(ag, pid))}</td>
         <td${acc.bench ? '' : ' class="zero"'}>${acc.bench || ''}</td>
-        ${cells}
         <td>${acc.ifT}</td>
         <td>${acc.ofT}</td>
+        ${cells}
         <td>${acc.pitches || ''}</td>
       </tr>
     `;

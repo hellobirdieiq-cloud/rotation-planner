@@ -642,7 +642,7 @@ function openCellSheet(inning, position) {
   });
 
   const chipsHtml = `
-    ${benchPids.length ? `<div class="cell-sheet-group-label">Bench</div><div class="player-chips">${benchPids.map(renderChip).join('')}</div>` : ''}
+    ${benchPids.length ? `<div class="cell-sheet-group-label">Bench</div><div class="player-chips player-chips-bench">${benchPids.map(renderChip).join('')}</div>` : ''}
     ${fieldPids.length ? `<div class="cell-sheet-group-label">On Field</div><div class="player-chips">${fieldPids.map(renderChip).join('')}</div>` : ''}
   `;
 
@@ -666,11 +666,11 @@ function openCellSheet(inning, position) {
       <div class="cell-sheet-helper">Assign a player to this position</div>
     </div>
     ${currentLine}
+    ${cellActionsHtml}
     <div class="cell-sheet-section">
       <div class="cell-sheet-label">Select a player</div>
       ${chipsHtml}
     </div>
-    ${cellActionsHtml}
   `;
 
   wrap.querySelectorAll('.player-chip[data-target-pid]:not([disabled])').forEach((chip) => {
