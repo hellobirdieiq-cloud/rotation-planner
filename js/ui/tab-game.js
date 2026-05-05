@@ -113,6 +113,7 @@ function renderInningCards(ag) {
 
 function renderPlayerGrid(ag) {
   const innings = ag.schedule || [];
+  const completed = ag.completedInnings || [];
   const rows = (ag.presentPlayers || []).map((pid) => {
     const cells = innings.map((inn) => {
       const cell = inn.cells[pid];
@@ -122,7 +123,12 @@ function renderPlayerGrid(ag) {
       const lockIcon = cell && cell.locked ? '🔒 ' : '';
       const manualClass = cell && cell.manual ? ' cell-manual' : '';
       const benchClass = isBench ? ' player-grid-bench' : '';
-      return `<td class="player-grid-cell${manualClass}${benchClass}">${lockIcon}${esc(display)}</td>`;
+      const isCompleted = completed.includes(inn.index);
+      const clickable = !isBench && !isCompleted;
+      const dataAttrs = clickable
+        ? ` data-inning="${inn.index}" data-position="${esc(rawAssignment)}"`
+        : '';
+      return `<td class="player-grid-cell${manualClass}${benchClass}"${dataAttrs}>${lockIcon}${esc(display)}</td>`;
     }).join('');
     return `
       <tr>
@@ -258,6 +264,13 @@ function bind() {
     btn.addEventListener('click', () => {
       const [inning, position] = btn.dataset.cell.split('|');
       openCellSheet(parseInt(inning, 10), position);
+    });
+  });
+
+  // Player-grid cell taps.
+  mountEl.querySelectorAll('.player-grid-cell[data-inning][data-position]').forEach((td) => {
+    td.addEventListener('click', () => {
+      openCellSheet(parseInt(td.dataset.inning, 10), td.dataset.position);
     });
   });
 
