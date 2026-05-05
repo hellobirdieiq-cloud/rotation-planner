@@ -1103,19 +1103,20 @@ body {
 }
 .player-grid {
   border-collapse: collapse;
-  width: 100%;
-  font-size: 0.95rem;
+  width: auto;
+  font-size: 0.9rem;
 }
 .player-grid th,
 .player-grid td {
   border: 1px solid var(--color-border);
-  padding: var(--space-xs) var(--space-sm);
+  padding: 2px 6px;
   text-align: center;
   white-space: nowrap;
 }
 .player-grid thead th {
   background: var(--color-bg-secondary);
   font-weight: 600;
+  min-width: 2.25rem;
 }
 .player-grid .player-grid-name {
   text-align: left;
@@ -1124,13 +1125,20 @@ body {
   background: var(--color-bg);
   z-index: 1;
   font-weight: 500;
+  width: 1%;
+  padding-right: var(--space-sm);
 }
 .player-grid .player-grid-corner {
   position: sticky;
   left: 0;
   z-index: 2;
   text-align: left;
+  width: 1%;
 }
 .player-grid .player-grid-cell.cell-manual {
   border-left: 3px solid var(--color-primary);
+}
+.player-grid .player-grid-bench {
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-secondary);
 }

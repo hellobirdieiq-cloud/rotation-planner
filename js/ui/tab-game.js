@@ -116,10 +116,13 @@ function renderPlayerGrid(ag) {
   const rows = (ag.presentPlayers || []).map((pid) => {
     const cells = innings.map((inn) => {
       const cell = inn.cells[pid];
-      const assignment = cell && cell.assignment ? cell.assignment : '—';
+      const rawAssignment = cell && cell.assignment ? cell.assignment : '—';
+      const isBench = rawAssignment === 'BN';
+      const display = isBench ? '—' : rawAssignment;
       const lockIcon = cell && cell.locked ? '🔒 ' : '';
       const manualClass = cell && cell.manual ? ' cell-manual' : '';
-      return `<td class="player-grid-cell${manualClass}">${lockIcon}${esc(assignment)}</td>`;
+      const benchClass = isBench ? ' player-grid-bench' : '';
+      return `<td class="player-grid-cell${manualClass}${benchClass}">${lockIcon}${esc(display)}</td>`;
     }).join('');
     return `
       <tr>
