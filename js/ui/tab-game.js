@@ -90,7 +90,7 @@ function renderHtml() {
 
     ${ag ? `
       <div class="lineup-view-toggle" role="tablist" aria-label="Lineup view">
-        <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">By Player</button>
+        <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">By Inning</button>
         <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">By Position</button>
       </div>
     ` : ''}
@@ -127,8 +127,13 @@ function renderInningCards(ag) {
 function renderPlayerGrid(ag) {
   const innings = ag.schedule || [];
   const completed = ag.completedInnings || [];
-  const rows = (ag.presentPlayers || []).map((pid) => {
-    const cells = innings.map((inn) => {
+  const players = ag.presentPlayers || [];
+
+  const headerCells = players.map((pid) => `<th scope="col">${esc(nameOf(ag, pid))}</th>`).join('');
+
+  const rows = innings.map((inn) => {
+    const isCompleted = completed.includes(inn.index);
+    const cells = players.map((pid) => {
       const cell = inn.cells[pid];
       const rawAssignment = cell && cell.assignment ? cell.assignment : '—';
       const isBench = rawAssignment === 'BN';
@@ -136,7 +141,6 @@ function renderPlayerGrid(ag) {
       const lockIcon = cell && cell.locked ? '🔒 ' : '';
       const manualClass = cell && cell.manual ? ' cell-manual' : '';
       const benchClass = isBench ? ' player-grid-bench' : '';
-      const isCompleted = completed.includes(inn.index);
       const clickable = !isBench && !isCompleted;
       const dataAttrs = clickable
         ? ` data-inning="${inn.index}" data-position="${esc(rawAssignment)}"`
@@ -145,13 +149,11 @@ function renderPlayerGrid(ag) {
     }).join('');
     return `
       <tr>
-        <th scope="row" class="player-grid-name">${esc(nameOf(ag, pid))}</th>
+        <th scope="row" class="player-grid-name">Inning ${inn.index + 1}</th>
         ${cells}
       </tr>
     `;
   }).join('');
-
-  const headerCells = innings.map((inn) => `<th scope="col">${inn.index + 1}</th>`).join('');
 
   return `
     <div id="warning-mount"></div>
@@ -159,7 +161,7 @@ function renderPlayerGrid(ag) {
       <table class="player-grid">
         <thead>
           <tr>
-            <th scope="col" class="player-grid-corner">Player</th>
+            <th scope="col" class="player-grid-corner">Inning</th>
             ${headerCells}
           </tr>
         </thead>
