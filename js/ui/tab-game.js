@@ -107,8 +107,8 @@ function renderHtml() {
 
     ${ag ? `
       <div class="lineup-view-toggle" role="tablist" aria-label="Lineup view">
-        <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">All Innings</button>
-        <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">This Inning</button>
+        <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">Inning Overview</button>
+        <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">Inning Cards</button>
       </div>
     ` : ''}
 
