@@ -17,7 +17,8 @@ const POSITION_LABELS = {
   LF: "Left Field (LF)",
   LCF: "Left Center (LCF)",
   RCF: "Right Center (RCF)",
-  RF: "Right Field (RF)"
+  RF: "Right Field (RF)",
+  BN: "Bench (BN)"
 };
 
 // Module-local state for pre-game availability checkboxes.
@@ -166,9 +167,9 @@ function renderPlayerGrid(ag) {
       const manualClass = cell && cell.manual ? ' cell-manual' : '';
       const benchClass = isBench ? ' player-grid-bench' : '';
       const lockedClass = cell && cell.locked ? ' cell-already-locked' : '';
-      const clickable = !isBench && !isCompleted;
+      const clickable = !isCompleted;
       const dataAttrs = clickable
-        ? ` data-inning="${inn.index}" data-position="${esc(rawAssignment)}"`
+        ? ` data-inning="${inn.index}" data-position="${esc(rawAssignment)}"${isBench ? ` data-player-id="${esc(pid)}"` : ''}`
         : '';
       return `<td class="player-grid-cell${manualClass}${benchClass}${lockedClass}"${dataAttrs}>${lockIcon}${esc(display)}</td>`;
     }).join('');
@@ -349,7 +350,7 @@ function bind() {
   // Player-grid cell taps.
   mountEl.querySelectorAll('.player-grid-cell[data-inning][data-position]').forEach((td) => {
     td.addEventListener('click', () => {
-      openCellSheet(parseInt(td.dataset.inning, 10), td.dataset.position);
+      openCellSheet(parseInt(td.dataset.inning, 10), td.dataset.position, td.dataset.playerId || null);
     });
   });
 
@@ -608,7 +609,7 @@ function handleUnmarkComplete(inningIdx) {
   refresh();
 }
 
-function openCellSheet(inning, position) {
+function openCellSheet(inning, position, targetPid = null) {
   const ag = getActiveGame();
   if (!ag) return;
   if ((ag.completedInnings || []).includes(inning)) {
@@ -617,9 +618,11 @@ function openCellSheet(inning, position) {
   }
   const inn = ag.schedule[inning];
 
-  let currentPid = null;
-  for (const [pid, cell] of Object.entries(inn.cells)) {
-    if (cell && cell.assignment === position) { currentPid = pid; break; }
+  let currentPid = targetPid && inn.cells[targetPid] ? targetPid : null;
+  if (!currentPid) {
+    for (const [pid, cell] of Object.entries(inn.cells)) {
+      if (cell && cell.assignment === position) { currentPid = pid; break; }
+    }
   }
   const currentCell = currentPid ? inn.cells[currentPid] : null;
   const isLocked = !!(currentCell && currentCell.locked);
