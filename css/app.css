@@ -948,3 +948,30 @@ body {
 .summary-table td.zero {
   color: var(--color-text-tertiary);
 }
+
+/* === Settings tab === */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.settings-section {
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.settings-heading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+.settings-text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.settings-section .btn-primary {
+  width: 100%;
+}

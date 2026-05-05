@@ -2,6 +2,7 @@ import { mountPlayersTab } from './ui/tab-players.js';
 import { mountGameTab } from './ui/tab-game.js';
 import { mountGameSummaryTab } from './ui/tab-game-summary.js';
 import { mountSavedTab } from './ui/tab-saved.js';
+import { mountSettingsTab } from './ui/tab-settings.js';
 import { showToast } from './ui/toast.js';
 import { getUiPrefs, setUiPrefs } from './store.js';
 
@@ -29,6 +30,10 @@ const TABS = {
   saved: {
     title: 'Saved Games',
     mount: (c) => mountSavedTab(c),
+  },
+  settings: {
+    title: 'Settings',
+    mount: (c) => mountSettingsTab(c),
   },
 };
 
