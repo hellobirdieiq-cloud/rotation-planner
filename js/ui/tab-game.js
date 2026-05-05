@@ -100,7 +100,7 @@ function presentRowHtml(p) {
 function renderInningCards(ag) {
   return `
     <div id="warning-mount"></div>
-    <div class="innings-list">${ag.schedule.map((inn) => renderInningCard(ag, inn)).join('')}</div>
+    <div class="inning-columns">${ag.schedule.map((inn) => renderInningCard(ag, inn)).join('')}</div>
   `;
 }
 
@@ -220,12 +220,14 @@ function bind() {
   });
 }
 
-// Entry point for the Generate button. If any innings are marked complete,
-// show the AF9 / OD-14 three-button modal first.
+// Entry point for the Generate button. Generate now means "append the next
+// inning"; the legacy three-button "Regenerate?" sheet is bypassed via the
+// ALLOW_FULL_REGENERATE flag. Flip the flag to re-enable a full-regenerate path.
 function handleGenerateButton() {
+  const ALLOW_FULL_REGENERATE = false;
   const ag = getActiveGame();
   const completedCount = ag ? (ag.completedInnings || []).length : 0;
-  if (completedCount === 0) {
+  if (!ALLOW_FULL_REGENERATE || completedCount === 0) {
     runGenerate();
     return;
   }
@@ -249,6 +251,22 @@ function handleGenerateButton() {
 
 function runGenerate() {
   const totalInnings = parseInt(mountEl.querySelector('#total-innings').value, 10) || 6;
+  const oldGame = getActiveGame();
+  const existingSchedule = (oldGame && oldGame.schedule) ? oldGame.schedule : [];
+  const completedInnings = (oldGame && oldGame.completedInnings) ? oldGame.completedInnings : [];
+  const nextIndex = existingSchedule.length;
+
+  // Don't generate ahead of the active inning: every already-generated inning
+  // must be marked complete before the next one can be added.
+  if (existingSchedule.length > 0 && completedInnings.length < existingSchedule.length) {
+    showToast('Complete current inning first.', { variant: 'danger', dismissible: true });
+    return;
+  }
+  if (nextIndex >= totalInnings) {
+    showToast('All innings already generated.', { variant: 'danger', dismissible: true });
+    return;
+  }
+
   const roster = getRoster();
   const presentPlayers = Object.values(roster)
     .filter((p) => !p.archived && pendingPresent[p.id] !== false)
@@ -273,18 +291,16 @@ function runGenerate() {
     };
   });
 
-  const oldGame = getActiveGame();
-  // Carry forward locks from prior activeGame so pre-gen locks survive Generate.
+  // Carry forward locks from already-generated innings so generate() honors
+  // them when computing the next inning.
   const locks = [];
-  if (oldGame && oldGame.schedule) {
-    oldGame.schedule.forEach((inn, idx) => {
-      for (const [pid, cell] of Object.entries(inn.cells)) {
-        if (cell && cell.locked && presentPlayers.includes(pid) && idx < totalInnings) {
-          locks.push({ inning: idx, playerId: pid, position: cell.assignment });
-        }
+  existingSchedule.forEach((inn, idx) => {
+    for (const [pid, cell] of Object.entries(inn.cells)) {
+      if (cell && cell.locked && presentPlayers.includes(pid) && idx < totalInnings) {
+        locks.push({ inning: idx, playerId: pid, position: cell.assignment });
       }
-    });
-  }
+    }
+  });
   const carriedPitches = oldGame && oldGame.pitchAppearances ? oldGame.pitchAppearances : {};
 
   const result = generate({
@@ -297,14 +313,21 @@ function runGenerate() {
     });
     return;
   }
+  const nextInning = result.schedule[nextIndex];
+  if (!nextInning) {
+    showToast('Could not generate next inning.', {
+      variant: 'danger', dismissible: true, durationMs: 0,
+    });
+    return;
+  }
 
   const ag = {
     id: oldGame ? oldGame.id : newId(),
     date: oldGame ? oldGame.date : new Date().toISOString().slice(0, 10),
     savedAt: new Date().toISOString(),
     totalInnings,
-    completedInnings: [],
-    schedule: result.schedule,
+    completedInnings,
+    schedule: [...existingSchedule, nextInning],
     pitchAppearances: carriedPitches,
     presentPlayers,
     rosterSnapshot,
@@ -319,7 +342,7 @@ function runGenerate() {
     const wm = mountEl.querySelector('#warning-mount');
     if (wm) renderWarningPanel(wm, result.warnings);
   }
-  showToast('Lineup generated.', { durationMs: 2500 });
+  showToast(`Inning ${nextIndex + 1} generated.`, { durationMs: 2500 });
 }
 
 function handleSaveGame() {

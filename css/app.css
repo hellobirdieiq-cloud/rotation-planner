@@ -508,6 +508,20 @@ body {
   padding-bottom: 80px; /* clear of sticky bottom bar */
 }
 
+.inning-columns {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x proximity;
+}
+
+.inning-columns .inning-card {
+  min-width: 220px;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
 .inning-card {
   background: var(--color-bg);
   border-radius: var(--radius-lg);
@@ -515,8 +529,8 @@ body {
   overflow: hidden;
 }
 .inning-card.completed {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  background: #e8f7ee;
+  border-color: #4caf50;
 }
 .inning-card-header {
   font-size: 14px;
