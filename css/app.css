@@ -1072,6 +1072,31 @@ body {
 }
 
 /* Segmented control: By Player / By Position */
+.game-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.game-date-label { font-weight: 500; }
+.game-date-input {
+  font: inherit;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.game-date-input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
 .lineup-view-toggle {
   display: inline-flex;
   gap: 2px;
@@ -1109,6 +1134,15 @@ body {
 }
 
 /* By-Player grid: card-wrapped, striped, sticky name column */
+.player-grid-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 8px;
+}
+.player-grid-export-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
 .player-grid-wrap {
   margin: 0 0 12px;
   overflow-x: auto;
@@ -1162,6 +1196,32 @@ body {
   min-width: 0;
   width: 1%;
 }
+.player-grid-name-label { display: block; }
+.player-grid-name-status {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+.player-grid-end-btn {
+  display: block;
+  margin-top: 4px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.player-grid-end-btn:active { background: var(--color-bg); }
+.player-grid-row-complete .player-grid-name { color: var(--color-text-tertiary); }
 .player-grid .player-grid-corner {
   position: sticky;
   left: 0;
@@ -1205,6 +1265,31 @@ body {
 }
 .player-grid-cell[data-inning][data-position]:focus-visible {
   outline: none;
+}
+.player-grid tfoot.player-grid-tally tr > th,
+.player-grid tfoot.player-grid-tally tr > td {
+  background: var(--color-bg-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  padding: 6px 8px;
+  min-height: 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 0;
+}
+.player-grid tfoot.player-grid-tally tr:first-child > th,
+.player-grid tfoot.player-grid-tally tr:first-child > td {
+  border-top: 2px solid var(--color-border);
+}
+.player-grid .player-grid-tally-label {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .cell-sheet-group-label {

@@ -1,6 +1,6 @@
 import { getActiveGame, setActiveGame, getRoster, getSavedGames, setSavedGames } from '../store.js';
 import { newId } from '../id.js';
-import { layoutFor } from '../positions.js';
+import { layoutFor, isInfield, isOutfield } from '../positions.js';
 import { rebalance } from '../rebalance.js';
 import { applyEdit, clearCell, toggleLock } from '../edit.js';
 import { validateMarkComplete } from '../rules.js';
@@ -106,6 +106,10 @@ function renderHtml() {
     </details>
 
     ${ag ? `
+      <div class="game-meta">
+        <label class="game-date-label" for="game-date">Game date</label>
+        <input type="date" id="game-date" class="game-date-input" value="${esc(ag.date || '')}">
+      </div>
       <div class="lineup-view-toggle" role="tablist" aria-label="Lineup view">
         <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">Inning Overview</button>
         <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">Inning Cards</button>
@@ -165,15 +169,48 @@ function renderPlayerGrid(ag) {
       return `<td class="player-grid-cell${manualClass}${benchClass}"${dataAttrs}>${lockIcon}${esc(display)}</td>`;
     }).join('');
     return `
-      <tr>
-        <th scope="row" class="player-grid-name">Inning ${inn.index + 1}</th>
+      <tr${isCompleted ? ' class="player-grid-row-complete"' : ''}>
+        <th scope="row" class="player-grid-name">
+          <span class="player-grid-name-label">Inning ${inn.index + 1}</span>
+          ${isCompleted
+            ? '<span class="player-grid-name-status">✓ Complete</span>'
+            : `<button class="player-grid-end-btn" type="button" data-action="mark" data-inning="${inn.index}">End Inning ${inn.index + 1}</button>`}
+        </th>
         ${cells}
       </tr>
     `;
   }).join('');
 
+  const tallies = {};
+  players.forEach((pid) => { tallies[pid] = { bench: 0, infield: 0, outfield: 0 }; });
+  innings.forEach((inn) => {
+    if (!inn || !inn.cells) return;
+    players.forEach((pid) => {
+      const cell = inn.cells[pid];
+      if (!cell || typeof cell.assignment !== 'string') return;
+      const a = cell.assignment;
+      if (a === 'BN') tallies[pid].bench++;
+      else if (isInfield(a)) tallies[pid].infield++;
+      else if (isOutfield(a)) tallies[pid].outfield++;
+    });
+  });
+  const tallyRowHtml = (label, key) => {
+    const cells = players.map((pid) => `<td>${tallies[pid][key] || 0}</td>`).join('');
+    return `<tr><th scope="row" class="player-grid-tally-label">${label}</th>${cells}</tr>`;
+  };
+  const tfootHtml = `
+    <tfoot class="player-grid-tally">
+      ${tallyRowHtml('BN', 'bench')}
+      ${tallyRowHtml('IF', 'infield')}
+      ${tallyRowHtml('OF', 'outfield')}
+    </tfoot>
+  `;
+
   return `
     <div id="warning-mount"></div>
+    <div class="player-grid-actions">
+      <button type="button" class="btn-secondary player-grid-export-btn" data-action="export-csv">Download CSV</button>
+    </div>
     <div class="player-grid-wrap">
       <table class="player-grid">
         <thead>
@@ -183,6 +220,7 @@ function renderPlayerGrid(ag) {
           </tr>
         </thead>
         <tbody>${rows}</tbody>
+        ${tfootHtml}
       </table>
     </div>
   `;
@@ -322,6 +360,12 @@ function bind() {
   mountEl.querySelectorAll('[data-action="unmark"]').forEach((btn) => {
     btn.addEventListener('click', () => handleUnmarkComplete(parseInt(btn.dataset.inning, 10)));
   });
+
+  // CSV export of the rotation grid.
+  mountEl.querySelector('[data-action="export-csv"]')?.addEventListener('click', handleExportCsv);
+
+  // Active-game date edit.
+  mountEl.querySelector('#game-date')?.addEventListener('change', handleDateChange);
 }
 
 // Single-action scheduling: rebuilds incomplete/unlocked innings while
@@ -388,6 +432,61 @@ function handleUpdateLineup() {
     if (wm) renderWarningPanel(wm, result.warnings);
   }
   showToast('Lineup updated.', { durationMs: 2500 });
+}
+
+function handleExportCsv() {
+  const ag = getActiveGame();
+  if (!ag) {
+    showToast('Update the lineup first.', { variant: 'danger', dismissible: true });
+    return;
+  }
+  const innings = ag.schedule || [];
+  const players = ag.presentPlayers || [];
+  const headerRow = ['Inning', ...players.map((pid) => nameOf(ag, pid))];
+  const dataRows = innings.map((inn) => {
+    const cells = players.map((pid) => {
+      const c = inn.cells && inn.cells[pid];
+      return c && typeof c.assignment === 'string' ? c.assignment : '';
+    });
+    return [`Inning ${inn.index + 1}`, ...cells];
+  });
+  const csvCell = (s) => {
+    const v = String(s);
+    return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  };
+  const csv = [headerRow, ...dataRows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const stem = ag.date ? `rotation-grid-${ag.date}` : `rotation-grid-${ts}`;
+  const filename = `${stem}.csv`;
+  try {
+    const file = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try { document.body.removeChild(a); } catch (_) {}
+      URL.revokeObjectURL(url);
+    }, 200);
+    showToast(`Saving ${filename}.`, { durationMs: 2500 });
+  } catch (e) {
+    showToast(`Download not supported here. (${(e && e.message) || e})`, {
+      variant: 'danger', dismissible: true, durationMs: 0,
+    });
+  }
+}
+
+function handleDateChange(e) {
+  const ag = getActiveGame();
+  if (!ag) return;
+  const v = e.target.value;
+  if (!v) return;
+  const next = JSON.parse(JSON.stringify(ag));
+  next.date = v;
+  setActiveGame(next);
 }
 
 function handleStartNewGame() {
