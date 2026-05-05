@@ -1195,8 +1195,7 @@ body {
   border-radius: 6px;
   transition: background 0.12s, box-shadow 0.12s, transform 0.08s;
 }
-.player-grid-cell[data-inning][data-position]:hover,
-.player-grid-cell[data-inning][data-position]:focus-visible {
+.player-grid-cell[data-inning][data-position]:hover {
   background: rgba(37, 99, 235, 0.14);
   box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.35);
 }
@@ -1205,15 +1204,8 @@ body {
   box-shadow: inset 0 0 0 2px var(--color-primary);
   transform: scale(0.98);
 }
-.player-grid-cell[data-inning][data-position]:hover::after {
-  content: "Edit";
-  position: absolute;
-  right: 4px;
-  top: 3px;
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--color-primary);
-  opacity: 0.85;
+.player-grid-cell[data-inning][data-position]:focus-visible {
+  outline: none;
 }
 
 .cell-sheet-group-label {
