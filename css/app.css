@@ -867,8 +867,40 @@ body {
 .summary-meta {
   font-size: 13px;
   color: var(--color-text-secondary);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   padding: 0 4px;
+}
+.summary-pitch-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: center;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.summary-pitch-label {
+  font-weight: 500;
+  color: var(--color-text);
+  margin-right: 4px;
+}
+.summary-pitch-cell {
+  background: #fefce8;
+  color: #854d0e;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.summary-pitch-cell strong {
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+  margin-right: 4px;
+  font-size: 11px;
 }
 .summary-scroll {
   background: var(--color-bg);
