@@ -70,6 +70,10 @@ export function generate({ presentPlayers, rosterSnapshot, totalInnings, locks, 
   const schedule = [];
   const warnings = [];
   let curPitcher = null;
+  // H8 — once a pitcher is replaced by a different pitcher in a later inning,
+  // they cannot return to the mound for the rest of the game. Tracked across
+  // the inning loop so the eligibility filter excludes them.
+  const removedPitchers = new Set();
 
   for (let inn = 0; inn < totalI; inn++) {
     const lockMap = locksByInning[inn];
@@ -82,12 +86,15 @@ export function generate({ presentPlayers, rosterSnapshot, totalInnings, locks, 
     const cells = {};
 
     // 1) Pick pitcher.
+    // Score-based selection every inning so pitching spreads across the roster.
+    // The previous inning's pitcher is treated like any other candidate; the
+    // scoring (lowest pitchInn first) naturally rotates through unused players.
     let pitcherId = lockedAtP;
     if (!pitcherId) {
-      // Try to keep curPitcher if eligible.
       const eligible = (pid) => {
         if (lockMap.has(pid) && lockMap.get(pid) !== 'P') return false;
         if (lockedAtBN.has(pid)) return false;
+        if (removedPitchers.has(pid)) return false;     // H8
         const player = rosterSnapshot[pid];
         if (!player) return false;
         if (player.age === 12) return false;             // H5
@@ -100,22 +107,18 @@ export function generate({ presentPlayers, rosterSnapshot, totalInnings, locks, 
         if (entered >= max) return false;
         return true;
       };
-      if (curPitcher && eligible(curPitcher)) {
-        pitcherId = curPitcher;
-      } else {
-        const candidates = present.filter(eligible);
-        // Soft preference order:
-        //   fewer pitch innings → not caught last → not yet caught this game → random
-        candidates.sort((a, b) => {
-          if (pitchInn[a] !== pitchInn[b]) return pitchInn[a] - pitchInn[b];
-          if (caughtLast[a] !== caughtLast[b]) return caughtLast[a] ? 1 : -1;
-          if ((catchInn[a] > 0) !== (catchInn[b] > 0)) return (catchInn[a] > 0) ? 1 : -1;
-          return Math.random() - 0.5;
-        });
-        pitcherId = candidates[0] || null;
-        if (!pitcherId) {
-          warnings.push(`Inning ${inn + 1}: no eligible pitcher.`);
-        }
+      const candidates = present.filter(eligible);
+      // Soft preference order:
+      //   fewer pitch innings → not caught last → not yet caught this game → random
+      candidates.sort((a, b) => {
+        if (pitchInn[a] !== pitchInn[b]) return pitchInn[a] - pitchInn[b];
+        if (caughtLast[a] !== caughtLast[b]) return caughtLast[a] ? 1 : -1;
+        if ((catchInn[a] > 0) !== (catchInn[b] > 0)) return (catchInn[a] > 0) ? 1 : -1;
+        return Math.random() - 0.5;
+      });
+      pitcherId = candidates[0] || null;
+      if (!pitcherId) {
+        warnings.push(`Inning ${inn + 1}: no eligible pitcher.`);
       }
     }
     if (pitcherId) {
@@ -124,9 +127,14 @@ export function generate({ presentPlayers, rosterSnapshot, totalInnings, locks, 
       ifCnt[pitcherId]++;
       lastPos[pitcherId] = 'P';
       posCount[pitcherId]['P'] = (posCount[pitcherId]['P'] || 0) + 1;
+      // When the pitcher changes from inning to inning, the previous one is
+      // permanently removed (H8). curPitcher is preserved across pitcher-less
+      // innings so a later replacement still triggers removal of the prior actual
+      // pitcher.
+      if (curPitcher && pitcherId !== curPitcher) {
+        removedPitchers.add(curPitcher);
+      }
       curPitcher = pitcherId;
-    } else {
-      curPitcher = null;
     }
 
     // 2) Apply non-P locks.

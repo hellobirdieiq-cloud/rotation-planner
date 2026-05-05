@@ -407,8 +407,44 @@ body {
 .game-availability {
   background: var(--color-bg);
   border-radius: var(--radius-md);
-  padding: 12px;
   margin-bottom: 12px;
+  overflow: hidden;
+}
+.availability-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  user-select: none;
+}
+.availability-summary::-webkit-details-marker { display: none; }
+.availability-summary::marker { content: ""; }
+.availability-summary::after {
+  content: "▶";
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  transition: transform 0.12s ease-out;
+}
+.game-availability[open] .availability-summary::after {
+  content: "▼";
+}
+.availability-title { color: var(--color-text); }
+.availability-meta {
+  margin-left: auto;
+  margin-right: 8px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+}
+.availability-body {
+  padding: 0 14px 12px;
 }
 .present-list {
   display: grid;

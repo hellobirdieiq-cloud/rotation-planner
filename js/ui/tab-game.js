@@ -12,11 +12,20 @@ import { showToast, renderWarningPanel } from './toast.js';
 // Persists in DOM only (until Generate is tapped).
 let pendingPresent = null;
 let mountEl = null;
+// Collapsible-section state. null = uninitialized; once set, persists across refreshes.
+// Default rule: expanded before first Generate; auto-collapsed after Generate.
+let availabilityExpanded = null;
 
 export function mountGameTab(container) {
   mountEl = container;
   initPendingPresent();
+  initAvailabilityExpanded();
   refresh();
+}
+
+function initAvailabilityExpanded() {
+  if (availabilityExpanded !== null) return;        // preserve user's manual choice across refreshes
+  availabilityExpanded = !getActiveGame();           // expanded only before first Generate
 }
 
 function initPendingPresent() {
@@ -45,19 +54,26 @@ function renderHtml() {
   const presentCount = active.filter((p) => pendingPresent[p.id] !== false).length;
   const sittingCount = active.length - presentCount;
 
+  const playerWord = presentCount === 1 ? 'player' : 'players';
+
   return `
-    <div class="game-availability">
-      <div class="section-heading">Pre-game availability</div>
-      ${active.length === 0
-        ? '<div class="placeholder">No active players in your roster yet.</div>'
-        : `<div class="present-list">${active.map(presentRowHtml).join('')}</div>`}
-      <div class="present-summary">
-        <span id="present-count">${presentCount} present · ${sittingCount} sitting</span>
-        <label class="innings-input">Innings
-          <input type="number" id="total-innings" min="1" max="9" value="${ag ? ag.totalInnings : 6}">
-        </label>
+    <details class="game-availability" id="availability-section"${availabilityExpanded ? ' open' : ''}>
+      <summary class="availability-summary">
+        <span class="availability-title">Pre-game availability</span>
+        <span class="availability-meta" id="availability-meta">(${presentCount} ${playerWord})</span>
+      </summary>
+      <div class="availability-body">
+        ${active.length === 0
+          ? '<div class="placeholder">No active players in your roster yet.</div>'
+          : `<div class="present-list">${active.map(presentRowHtml).join('')}</div>`}
+        <div class="present-summary">
+          <span id="present-count">${presentCount} present · ${sittingCount} sitting</span>
+          <label class="innings-input">Innings
+            <input type="number" id="total-innings" min="1" max="9" value="${ag ? ag.totalInnings : 6}">
+          </label>
+        </div>
       </div>
-    </div>
+    </details>
 
     ${ag ? renderInningCards(ag) : '<div class="placeholder"><strong>No lineup yet</strong>Tap Generate to create one.</div>'}
 
@@ -155,14 +171,23 @@ function renderInningCard(ag, inn) {
 }
 
 function bind() {
+  // Availability section open/close — keep module state in sync with native <details> toggle.
+  const detailsEl = mountEl.querySelector('#availability-section');
+  detailsEl?.addEventListener('toggle', () => {
+    availabilityExpanded = !!detailsEl.open;
+  });
+
   // Availability toggles.
   mountEl.querySelectorAll('.present-row input').forEach((cb) => {
     cb.addEventListener('change', () => {
       pendingPresent[cb.dataset.pid] = cb.checked;
       const active = Object.values(getRoster()).filter((p) => !p.archived);
       const present = active.filter((p) => pendingPresent[p.id] !== false).length;
-      const el = mountEl.querySelector('#present-count');
-      if (el) el.textContent = `${present} present · ${active.length - present} sitting`;
+      const sitting = active.length - present;
+      const summaryEl = mountEl.querySelector('#present-count');
+      if (summaryEl) summaryEl.textContent = `${present} present · ${sitting} sitting`;
+      const metaEl = mountEl.querySelector('#availability-meta');
+      if (metaEl) metaEl.textContent = `(${present} ${present === 1 ? 'player' : 'players'})`;
     });
   });
 
@@ -286,6 +311,9 @@ function runGenerate() {
     included: true,
   };
   setActiveGame(ag);
+  // Auto-collapse the pre-game availability section after a successful Generate
+  // so the inning cards are immediately visible without scrolling.
+  availabilityExpanded = false;
   refresh();
   if (result.warnings.length > 0) {
     const wm = mountEl.querySelector('#warning-mount');
