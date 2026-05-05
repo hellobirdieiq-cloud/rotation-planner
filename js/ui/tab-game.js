@@ -114,6 +114,9 @@ function renderHtml() {
         <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">Inning Overview</button>
         <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">Inning Cards</button>
       </div>
+      <div class="player-grid-actions">
+        <button type="button" class="btn-secondary player-grid-export-btn" data-action="export-csv">Download CSV</button>
+      </div>
     ` : ''}
 
     ${ag ? (viewMode === 'player' ? renderPlayerGrid(ag) : renderInningCards(ag)) : '<div class="placeholder"><strong>No lineup yet</strong>Tap Update Lineup to create one.</div>'}
@@ -162,11 +165,12 @@ function renderPlayerGrid(ag) {
       const lockIcon = cell && cell.locked ? '🔒 ' : '';
       const manualClass = cell && cell.manual ? ' cell-manual' : '';
       const benchClass = isBench ? ' player-grid-bench' : '';
+      const lockedClass = cell && cell.locked ? ' cell-already-locked' : '';
       const clickable = !isBench && !isCompleted;
       const dataAttrs = clickable
         ? ` data-inning="${inn.index}" data-position="${esc(rawAssignment)}"`
         : '';
-      return `<td class="player-grid-cell${manualClass}${benchClass}"${dataAttrs}>${lockIcon}${esc(display)}</td>`;
+      return `<td class="player-grid-cell${manualClass}${benchClass}${lockedClass}"${dataAttrs}>${lockIcon}${esc(display)}</td>`;
     }).join('');
     return `
       <tr${isCompleted ? ' class="player-grid-row-complete"' : ''}>
@@ -198,8 +202,14 @@ function renderPlayerGrid(ag) {
     const cells = players.map((pid) => `<td>${tallies[pid][key] || 0}</td>`).join('');
     return `<tr><th scope="row" class="player-grid-tally-label">${label}</th>${cells}</tr>`;
   };
+  const tallySectionHeaderHtml = `
+    <tr class="player-grid-tally-header">
+      <th colspan="${1 + players.length}" scope="colgroup" class="player-grid-tally-section-label">Innings at:</th>
+    </tr>
+  `;
   const tfootHtml = `
     <tfoot class="player-grid-tally">
+      ${tallySectionHeaderHtml}
       ${tallyRowHtml('BN', 'bench')}
       ${tallyRowHtml('IF', 'infield')}
       ${tallyRowHtml('OF', 'outfield')}
@@ -208,9 +218,6 @@ function renderPlayerGrid(ag) {
 
   return `
     <div id="warning-mount"></div>
-    <div class="player-grid-actions">
-      <button type="button" class="btn-secondary player-grid-export-btn" data-action="export-csv">Download CSV</button>
-    </div>
     <div class="player-grid-wrap">
       <table class="player-grid">
         <thead>
