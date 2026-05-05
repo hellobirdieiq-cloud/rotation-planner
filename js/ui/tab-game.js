@@ -1,7 +1,6 @@
 import { getActiveGame, setActiveGame, getRoster, getSavedGames, setSavedGames } from '../store.js';
 import { newId } from '../id.js';
 import { layoutFor } from '../positions.js';
-import { generate } from '../generate.js';
 import { rebalance } from '../rebalance.js';
 import { applyEdit, clearCell, toggleLock } from '../edit.js';
 import { validateMarkComplete } from '../rules.js';
@@ -75,11 +74,10 @@ function renderHtml() {
       </div>
     </details>
 
-    ${ag ? renderInningCards(ag) : '<div class="placeholder"><strong>No lineup yet</strong>Tap Generate to create one.</div>'}
+    ${ag ? renderInningCards(ag) : '<div class="placeholder"><strong>No lineup yet</strong>Tap Update Lineup to create one.</div>'}
 
     <div class="game-bottom-bar">
-      <button class="btn-bottom" type="button" data-action="generate">Generate</button>
-      <button class="btn-bottom" type="button" data-action="rebalance"${ag ? '' : ' disabled'}>Rebalance</button>
+      <button class="btn-bottom" type="button" data-action="update">Update Lineup</button>
       <button class="btn-bottom" type="button" data-action="save"${ag ? '' : ' disabled'}>Save</button>
       <button class="btn-bottom" type="button" data-action="new-game"${ag ? '' : ' disabled'}>New Game</button>
     </div>
@@ -193,8 +191,7 @@ function bind() {
   });
 
   // Bottom-bar actions.
-  mountEl.querySelector('[data-action="generate"]')?.addEventListener('click', handleGenerateButton);
-  mountEl.querySelector('[data-action="rebalance"]')?.addEventListener('click', handleRebalance);
+  mountEl.querySelector('[data-action="update"]')?.addEventListener('click', handleUpdateLineup);
   mountEl.querySelector('[data-action="save"]:not([disabled])')?.addEventListener('click', handleSaveGame);
   mountEl.querySelector('[data-action="new-game"]:not([disabled])')?.addEventListener('click', handleStartNewGame);
 
@@ -222,57 +219,12 @@ function bind() {
   });
 }
 
-// Entry point for the Generate button. Generate now means "append the next
-// inning"; the legacy three-button "Regenerate?" sheet is bypassed via the
-// ALLOW_FULL_REGENERATE flag. Flip the flag to re-enable a full-regenerate path.
-function handleGenerateButton() {
-  const ALLOW_FULL_REGENERATE = false;
-  const ag = getActiveGame();
-  const completedCount = ag ? (ag.completedInnings || []).length : 0;
-  if (!ALLOW_FULL_REGENERATE || completedCount === 0) {
-    runGenerate();
-    return;
-  }
-  const wrap = document.createElement('div');
-  wrap.innerHTML = `
-    <div class="confirm-body">
-      <p><strong>${completedCount} ${completedCount === 1 ? 'inning is' : 'innings are'} marked complete.</strong></p>
-      <p>Regenerate will reset the entire lineup, including completed innings.</p>
-    </div>
-  `;
-  openSheet({
-    title: 'Regenerate?',
-    content: wrap,
-    actions: [
-      { label: 'Cancel', handler: closeSheet },
-      { label: 'Rebalance Remaining', variant: 'primary', handler: () => { closeSheet(); handleRebalance(); } },
-      { label: 'Regenerate Anyway', variant: 'danger', handler: () => { closeSheet(); runGenerate(); } },
-    ],
-  });
-}
-
-function runGenerate() {
+// Single-action scheduling: rebuilds incomplete/unlocked innings while
+// preserving completed innings and locked cells. Creates a fresh full
+// schedule when no active game exists.
+function handleUpdateLineup() {
   const totalInnings = parseInt(mountEl.querySelector('#total-innings').value, 10) || 6;
   const oldGame = getActiveGame();
-  const existingSchedule = (oldGame && oldGame.schedule) ? oldGame.schedule : [];
-  const completedInnings = (oldGame && oldGame.completedInnings) ? oldGame.completedInnings : [];
-  const nextIndex = existingSchedule.length;
-
-  // Old games may already have a full 6-inning schedule. Treat "all innings
-  // generated" as a separate, friendlier case before asking the user to mark
-  // the active inning complete.
-  if (nextIndex >= totalInnings) {
-    showToast('This game already has all innings generated. Start a new game to use inning-by-inning mode.', { variant: 'danger', dismissible: true });
-    return;
-  }
-  // Otherwise, only the LAST generated inning needs to be complete before the
-  // next one can be appended.
-  const lastGeneratedIndex = existingSchedule.length - 1;
-  const lastGeneratedComplete = completedInnings.includes(lastGeneratedIndex);
-  if (existingSchedule.length > 0 && !lastGeneratedComplete) {
-    showToast('Mark the current inning complete before generating the next inning.', { variant: 'danger', dismissible: true });
-    return;
-  }
 
   const roster = getRoster();
   const presentPlayers = Object.values(roster)
@@ -298,58 +250,39 @@ function runGenerate() {
     };
   });
 
-  // Carry forward locks from already-generated innings so generate() honors
-  // them when computing the next inning.
-  const locks = [];
-  existingSchedule.forEach((inn, idx) => {
-    for (const [pid, cell] of Object.entries(inn.cells)) {
-      if (cell && cell.locked && presentPlayers.includes(pid) && idx < totalInnings) {
-        locks.push({ inning: idx, playerId: pid, position: cell.assignment });
-      }
-    }
-  });
-  const carriedPitches = oldGame && oldGame.pitchAppearances ? oldGame.pitchAppearances : {};
-
-  const result = generate({
-    presentPlayers, rosterSnapshot, totalInnings, locks,
-    pitchAppearances: carriedPitches,
-  });
-  if (!result.schedule) {
-    showToast(result.warnings[0] || 'Could not generate.', {
-      variant: 'danger', dismissible: true, durationMs: 0,
-    });
-    return;
-  }
-  const nextInning = result.schedule[nextIndex];
-  if (!nextInning) {
-    showToast('Could not generate next inning.', {
-      variant: 'danger', dismissible: true, durationMs: 0,
-    });
-    return;
-  }
-
-  const ag = {
-    id: oldGame ? oldGame.id : newId(),
-    date: oldGame ? oldGame.date : new Date().toISOString().slice(0, 10),
+  const baseGame = oldGame ? {
+    ...oldGame,
+    totalInnings,
+    presentPlayers,
+    rosterSnapshot,
+  } : {
+    id: newId(),
+    date: new Date().toISOString().slice(0, 10),
     savedAt: new Date().toISOString(),
     totalInnings,
-    completedInnings,
-    schedule: [...existingSchedule, nextInning],
-    pitchAppearances: carriedPitches,
+    completedInnings: [],
+    schedule: [],
+    pitchAppearances: {},
     presentPlayers,
     rosterSnapshot,
     included: true,
   };
-  setActiveGame(ag);
-  // Auto-collapse the pre-game availability section after a successful Generate
-  // so the inning cards are immediately visible without scrolling.
+
+  const result = rebalance(baseGame);
+  if (!result.nextGame) {
+    showToast(result.warnings[0] || 'Could not update lineup.', {
+      variant: 'danger', dismissible: true, durationMs: 0,
+    });
+    return;
+  }
+  setActiveGame(result.nextGame);
   availabilityExpanded = false;
   refresh();
   if (result.warnings.length > 0) {
     const wm = mountEl.querySelector('#warning-mount');
     if (wm) renderWarningPanel(wm, result.warnings);
   }
-  showToast(`Inning ${nextIndex + 1} generated.`, { durationMs: 2500 });
+  showToast('Lineup updated.', { durationMs: 2500 });
 }
 
 function handleStartNewGame() {
@@ -435,25 +368,6 @@ function openPitchSheet(inning, playerId) {
       },
     ],
   });
-}
-
-function handleRebalance() {
-  const ag = getActiveGame();
-  if (!ag) return;
-  const result = rebalance(ag);
-  if (!result.nextGame) {
-    showToast(result.warnings[0] || 'Could not rebalance.', {
-      variant: 'danger', dismissible: true, durationMs: 0,
-    });
-    return;
-  }
-  setActiveGame(result.nextGame);
-  refresh();
-  if (result.warnings.length > 0) {
-    const wm = mountEl.querySelector('#warning-mount');
-    if (wm) renderWarningPanel(wm, result.warnings);
-  }
-  showToast('Future innings rebalanced.', { durationMs: 2500 });
 }
 
 function handleMarkComplete(inningIdx) {

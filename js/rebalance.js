@@ -37,8 +37,7 @@ export function rebalance(activeGame) {
   // Preserve original cells in completed innings AND original `locked`/`manual`
   // flags on cells that were already locked. Other cells take on the freshly
   // computed assignment.
-  const scheduleLimit = activeGame.schedule.length;
-  const newSchedule = result.schedule.slice(0, scheduleLimit).map((inn, idx) => {
+  const newSchedule = result.schedule.map((inn, idx) => {
     const wasCompleted = completed.has(idx);
     const out = { index: idx, cells: {} };
     for (const [pid, cell] of Object.entries(inn.cells)) {
