@@ -701,7 +701,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 10px 14px;
   margin-bottom: 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -765,15 +765,15 @@ body {
 }
 .player-chips {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
 }
 .player-chip {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: 10px 12px;
+  padding: 7px 12px;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   border-radius: var(--radius-md);
@@ -793,12 +793,19 @@ body {
 }
 .player-chips-bench .player-chip {
   background: var(--color-bg-secondary);
+  border-left: 3px solid #f59e0b;
+  padding: 9px 12px 9px 10px;
 }
 .player-chips-bench .chip-name {
   color: var(--color-text-secondary);
 }
 .player-chips-bench .chip-where {
   color: var(--color-text-tertiary);
+}
+.cell-sheet-group-label:has(+ .player-chips-bench) {
+  background: #fff8e1;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
 }
 .cell-sheet-section .player-chips + .cell-sheet-group-label {
   margin-top: 14px;
@@ -1402,7 +1409,7 @@ body {
   font-weight: 700;
   color: var(--color-text);
   text-decoration: underline;
-  margin: 8px 0 10px;
+  margin: 6px 0 6px;
 }
 
 .cell-sheet-subsection + .cell-sheet-subsection {
