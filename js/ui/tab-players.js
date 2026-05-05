@@ -1,4 +1,4 @@
-import { getRoster, setRoster } from '../store.js';
+import { getRoster, setRoster, getActiveGame, setActiveGame } from '../store.js';
 import { newId } from '../id.js';
 import { POSITIONS } from '../positions.js';
 import { openSheet, closeSheet } from './bottom-sheet.js';
@@ -181,6 +181,17 @@ function openEditor(playerId, refreshFn) {
         };
       }
       setRoster(r);
+
+      const ag = getActiveGame();
+      if (ag && ag.rosterSnapshot && ag.rosterSnapshot[playerId]) {
+        ag.rosterSnapshot[playerId] = {
+          ...ag.rosterSnapshot[playerId],
+          firstName,
+          lastName,
+        };
+        setActiveGame(ag);
+      }
+
       closeSheet();
       refreshFn();
     },
