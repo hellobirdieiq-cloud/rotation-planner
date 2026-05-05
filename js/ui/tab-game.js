@@ -81,6 +81,7 @@ function renderHtml() {
       <button class="btn-bottom" type="button" data-action="generate">Generate</button>
       <button class="btn-bottom" type="button" data-action="rebalance"${ag ? '' : ' disabled'}>Rebalance</button>
       <button class="btn-bottom" type="button" data-action="save"${ag ? '' : ' disabled'}>Save</button>
+      <button class="btn-bottom" type="button" data-action="new-game"${ag ? '' : ' disabled'}>New Game</button>
     </div>
   `;
 }
@@ -195,6 +196,7 @@ function bind() {
   mountEl.querySelector('[data-action="generate"]')?.addEventListener('click', handleGenerateButton);
   mountEl.querySelector('[data-action="rebalance"]')?.addEventListener('click', handleRebalance);
   mountEl.querySelector('[data-action="save"]:not([disabled])')?.addEventListener('click', handleSaveGame);
+  mountEl.querySelector('[data-action="new-game"]:not([disabled])')?.addEventListener('click', handleStartNewGame);
 
   // Cell taps.
   mountEl.querySelectorAll('.inn-cell:not([disabled])').forEach((btn) => {
@@ -260,7 +262,7 @@ function runGenerate() {
   // generated" as a separate, friendlier case before asking the user to mark
   // the active inning complete.
   if (nextIndex >= totalInnings) {
-    showToast('This game already has all innings generated.', { variant: 'danger', dismissible: true });
+    showToast('This game already has all innings generated. Start a new game to use inning-by-inning mode.', { variant: 'danger', dismissible: true });
     return;
   }
   // Otherwise, only the LAST generated inning needs to be complete before the
@@ -348,6 +350,14 @@ function runGenerate() {
     if (wm) renderWarningPanel(wm, result.warnings);
   }
   showToast(`Inning ${nextIndex + 1} generated.`, { durationMs: 2500 });
+}
+
+function handleStartNewGame() {
+  if (!confirm('Start a new game? This clears the current active game only. Your roster and saved games will stay.')) return;
+  setActiveGame(null);
+  initPendingPresent();
+  availabilityExpanded = true;
+  refresh();
 }
 
 function handleSaveGame() {
