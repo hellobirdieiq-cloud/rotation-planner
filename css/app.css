@@ -1071,52 +1071,82 @@ body {
   border-color: var(--color-primary);
 }
 
+/* Segmented control: By Player / By Position */
 .lineup-view-toggle {
   display: inline-flex;
-  gap: 0;
-  margin: 0 var(--space-md) var(--space-sm);
+  gap: 2px;
+  margin: 0 0 12px;
+  padding: 3px;
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  overflow: hidden;
-  background: var(--color-bg);
 }
 .lineup-view-toggle .view-toggle-btn {
   appearance: none;
+  -webkit-appearance: none;
   background: transparent;
   border: 0;
-  padding: var(--space-sm) var(--space-md);
+  padding: 7px 16px;
   font: inherit;
-  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border-radius: 6px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  font-family: inherit;
+}
+.lineup-view-toggle .view-toggle-btn:focus { outline: none; }
+.lineup-view-toggle .view-toggle-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 .lineup-view-toggle .view-toggle-btn.active {
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
+/* By-Player grid: card-wrapped, striped, sticky name column */
 .player-grid-wrap {
-  margin: 0 var(--space-md) var(--space-md);
+  margin: 0 0 12px;
   overflow-x: auto;
   padding-bottom: calc(110px + env(safe-area-inset-bottom));
   touch-action: pan-x;
   -webkit-overflow-scrolling: touch;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  -webkit-tap-highlight-color: transparent;
 }
 .player-grid {
-  border-collapse: collapse;
-  width: max-content;
-  font-size: 0.9rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  min-width: max-content;
+  font-size: 13px;
 }
 .player-grid th,
 .player-grid td {
-  border: 1px solid var(--color-border);
-  padding: 1px 4px;
+  padding: 8px 10px;
   text-align: center;
   white-space: nowrap;
+  border-bottom: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
+}
+.player-grid tbody tr:last-child > th,
+.player-grid tbody tr:last-child > td {
+  border-bottom: 0;
 }
 .player-grid thead th {
   background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
   font-weight: 600;
-  min-width: 1.75rem;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: 40px;
 }
 .player-grid .player-grid-name {
   text-align: left;
@@ -1125,18 +1155,30 @@ body {
   background: var(--color-bg);
   z-index: 1;
   font-weight: 500;
-  width: 1%;
-  padding-right: 6px;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-right: 1px solid var(--color-border);
+  min-width: 84px;
 }
 .player-grid .player-grid-corner {
   position: sticky;
   left: 0;
   z-index: 2;
   text-align: left;
-  width: 1%;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  padding: 8px 12px;
+  min-width: 84px;
+}
+.player-grid tbody tr:nth-child(even) > td:not(.player-grid-bench),
+.player-grid tbody tr:nth-child(even) > th.player-grid-name {
+  background: #fafafb;
+}
+.player-grid .player-grid-cell {
+  color: var(--color-text);
 }
 .player-grid .player-grid-cell.cell-manual {
-  border-left: 3px solid var(--color-primary);
+  box-shadow: inset 3px 0 0 var(--color-primary);
 }
 .player-grid .player-grid-bench {
   color: var(--color-text-tertiary);
