@@ -7,6 +7,19 @@ import { validateMarkComplete } from '../rules.js';
 import { openSheet, closeSheet } from './bottom-sheet.js';
 import { showToast, renderWarningPanel } from './toast.js';
 
+const POSITION_LABELS = {
+  P: "Pitcher (P)",
+  C: "Catcher (C)",
+  '1B': "First Base (1B)",
+  '2B': "Second Base (2B)",
+  '3B': "Third Base (3B)",
+  SS: "Shortstop (SS)",
+  LF: "Left Field (LF)",
+  LCF: "Left Center (LCF)",
+  RCF: "Right Center (RCF)",
+  RF: "Right Field (RF)"
+};
+
 // Module-local state for pre-game availability checkboxes.
 // Persists in DOM only (until Update Lineup is tapped).
 let pendingPresent = null;
@@ -528,7 +541,7 @@ function openCellSheet(inning, position) {
 
   wrap.innerHTML = `
     <div class="cell-sheet-hero">
-      <div class="cell-sheet-pos">${esc(position)}</div>
+      <div class="cell-sheet-pos">${esc(POSITION_LABELS[position] || position)}</div>
       <div class="cell-sheet-inning">Inning ${inning + 1}</div>
       <div class="cell-sheet-helper">Assign a player to this position</div>
     </div>
