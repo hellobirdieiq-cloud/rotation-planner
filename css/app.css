@@ -1154,7 +1154,7 @@ body {
   margin: 0 0 8px;
 }
 .player-grid-export-btn {
-  font-size: 12px;
+  font-size: 13px;
   padding: 6px 12px;
 }
 .player-grid-wrap {
@@ -1222,8 +1222,9 @@ body {
 .player-grid-end-btn {
   display: block;
   margin-top: 4px;
-  padding: 6px 10px;
-  font-size: 11px;
+  padding: 10px 10px;
+  min-height: 44px;
+  font-size: 13px;
   font-weight: 500;
   font-family: inherit;
   border: 1px solid var(--color-border);
@@ -1235,7 +1236,12 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .player-grid-end-btn:active { background: var(--color-bg); }
-.player-grid-row-complete .player-grid-name { color: var(--color-text-tertiary); }
+.player-grid tbody tr.player-grid-row-complete > th.player-grid-name,
+.player-grid tbody tr.player-grid-row-complete > td {
+  background: #e8f7ee;
+  color: var(--color-text-tertiary);
+  border-bottom-color: #4caf50;
+}
 .player-grid .player-grid-corner {
   position: sticky;
   left: 0;
