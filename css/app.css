@@ -848,6 +848,127 @@ body {
   color: var(--color-text-tertiary);
 }
 
+/* === Cell-edit sheet — 4-column zone grid === */
+.cell-sheet-zone-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.cell-sheet-zone-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  min-width: 0;
+  min-height: 64px;
+}
+.cell-sheet-zone-col.cell-sheet-zone-bench {
+  background: #fff8e1;
+  border-color: #fcd34d;
+}
+.cell-sheet-zone-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+  padding: 1px 0 5px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+.cell-sheet-zone-bench .cell-sheet-zone-label {
+  color: #92400e;
+  border-bottom-color: #fcd34d;
+}
+.cell-sheet-zone-col .player-chip {
+  width: 100%;
+  padding: 6px 6px;
+  gap: 1px;
+  min-width: 0;
+}
+.cell-sheet-zone-col .chip-name {
+  font-size: 13px;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.cell-sheet-zone-col .chip-where {
+  font-size: 11px;
+  line-height: 1.15;
+}
+.cell-sheet-zone-col .player-chip.pending {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.3);
+}
+.cell-sheet-zone-col .player-chip.pending .chip-name { color: #fff; }
+.cell-sheet-zone-col .player-chip.pending .chip-where { color: rgba(255, 255, 255, 0.85); }
+.cell-sheet-zone-empty {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  padding: 10px 0;
+}
+
+/* Swap preview */
+.cell-sheet-swap-preview {
+  background: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cell-sheet-swap-preview[data-state="pending"] {
+  background: #eff6ff;
+  border: 1px solid var(--color-primary);
+  color: var(--color-text);
+}
+.cell-sheet-swap-preview .swap-preview-text {
+  word-break: break-word;
+}
+.cell-sheet-swap-preview .swap-preview-text strong {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* Confirm swap button */
+.btn-confirm-swap {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: var(--color-primary);
+  color: #fff;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-confirm-swap:active { background: var(--color-primary-dark); }
+.btn-confirm-swap:disabled {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+  border-color: var(--color-border);
+  cursor: default;
+}
+
 /* === Pitch entry row === */
 .inn-pitches {
   display: flex;
