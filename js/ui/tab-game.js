@@ -79,6 +79,7 @@ function ensureViewModeRestored(ag) {
 function renderHtml() {
   const ag = getActiveGame();
   ensureViewModeRestored(ag);
+  const inGame = !!(ag && ag.gameStarted);
   const roster = getRoster();
   const active = Object.values(roster).filter((p) => !p.archived).sort(byName);
   const presentCount = active.filter((p) => pendingPresent[p.id] !== false).length;
@@ -87,44 +88,49 @@ function renderHtml() {
   const playerWord = presentCount === 1 ? 'player' : 'players';
 
   return `
-    <details class="game-availability" id="availability-section"${availabilityExpanded ? ' open' : ''}>
-      <summary class="availability-summary">
-        <span class="availability-title">Pre-game availability</span>
-        <span class="availability-meta" id="availability-meta">(${presentCount} ${playerWord})</span>
-      </summary>
-      <div class="availability-body">
-        ${active.length === 0
-          ? '<div class="placeholder">No active players in your roster yet.</div>'
-          : `<div class="present-list">${active.map(presentRowHtml).join('')}</div>`}
-        <div class="present-summary">
-          <span id="present-count">${presentCount} present · ${sittingCount} sitting</span>
-          <label class="innings-input">Innings
-            <input type="number" id="total-innings" min="1" max="9" value="${ag ? ag.totalInnings : 6}">
-          </label>
+    <div class="game-tab-root${inGame ? ' game-started' : ''}">
+      <details class="game-availability" id="availability-section"${availabilityExpanded ? ' open' : ''}>
+        <summary class="availability-summary">
+          <span class="availability-title">Pre-game availability</span>
+          <span class="availability-meta" id="availability-meta">(${presentCount} ${playerWord})</span>
+        </summary>
+        <div class="availability-body">
+          ${active.length === 0
+            ? '<div class="placeholder">No active players in your roster yet.</div>'
+            : `<div class="present-list">${active.map(presentRowHtml).join('')}</div>`}
+          <div class="present-summary">
+            <span id="present-count">${presentCount} present · ${sittingCount} sitting</span>
+            <label class="innings-input">Innings
+              <input type="number" id="total-innings" min="1" max="9" value="${ag ? ag.totalInnings : 6}">
+            </label>
+          </div>
         </div>
-      </div>
-    </details>
+      </details>
 
-    ${ag ? `
-      <div class="game-meta">
-        <label class="game-date-label" for="game-date">Game date</label>
-        <input type="date" id="game-date" class="game-date-input" value="${esc(ag.date || '')}">
-      </div>
-      <div class="lineup-view-toggle" role="tablist" aria-label="Lineup view">
-        <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">Inning Overview</button>
-        <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">Inning Cards</button>
-      </div>
-      <div class="player-grid-actions">
-        <button type="button" class="btn-secondary player-grid-export-btn" data-action="export-csv">Download CSV</button>
-      </div>
-    ` : ''}
+      ${ag ? `
+        <div class="game-meta">
+          <label class="game-date-label" for="game-date">Game date</label>
+          <input type="date" id="game-date" class="game-date-input" value="${esc(ag.date || '')}">
+        </div>
+        <div class="lineup-view-toggle" role="tablist" aria-label="Lineup view">
+          <button type="button" class="view-toggle-btn${viewMode === 'player' ? ' active' : ''}" data-view="player" role="tab" aria-selected="${viewMode === 'player'}">Inning Overview</button>
+          <button type="button" class="view-toggle-btn${viewMode === 'position' ? ' active' : ''}" data-view="position" role="tab" aria-selected="${viewMode === 'position'}">Inning Cards</button>
+        </div>
+        <div class="player-grid-actions">
+          <button type="button" class="btn-secondary player-grid-export-btn" data-action="export-csv">Download CSV</button>
+        </div>
+        <div class="game-toggle-bar">
+          <button type="button" class="${inGame ? 'btn-game-end' : 'btn-bottom'} game-toggle-btn" data-action="toggle-game-started">${inGame ? 'End Game' : 'Start Game'}</button>
+        </div>
+      ` : ''}
 
-    ${ag ? (viewMode === 'player' ? renderPlayerGrid(ag) : renderInningCards(ag)) : '<div class="placeholder"><strong>No lineup yet</strong>Tap Update Lineup to create one.</div>'}
+      ${ag ? (viewMode === 'player' ? renderPlayerGrid(ag) : renderInningCards(ag)) : '<div class="placeholder"><strong>No lineup yet</strong>Tap Update Lineup to create one.</div>'}
 
-    <div class="game-bottom-bar">
-      <button class="btn-bottom" type="button" data-action="update">Update Lineup</button>
-      <button class="btn-bottom" type="button" data-action="save"${ag ? '' : ' disabled'}>Save</button>
-      <button class="btn-bottom" type="button" data-action="new-game"${ag ? '' : ' disabled'}>Restart Game</button>
+      <div class="game-bottom-bar">
+        <button class="btn-bottom" type="button" data-action="update">Update Lineup</button>
+        <button class="btn-bottom" type="button" data-action="save"${ag ? '' : ' disabled'}>Save</button>
+        <button class="btn-bottom" type="button" data-action="new-game"${ag ? '' : ' disabled'}>Restart Game</button>
+      </div>
     </div>
   `;
 }
@@ -338,6 +344,7 @@ function bind() {
   mountEl.querySelector('[data-action="update"]')?.addEventListener('click', handleUpdateLineup);
   mountEl.querySelector('[data-action="save"]:not([disabled])')?.addEventListener('click', handleSaveGame);
   mountEl.querySelector('[data-action="new-game"]:not([disabled])')?.addEventListener('click', handleStartNewGame);
+  mountEl.querySelector('[data-action="toggle-game-started"]')?.addEventListener('click', handleToggleGameStarted);
 
   // Cell taps.
   mountEl.querySelectorAll('.inn-cell:not([disabled])').forEach((btn) => {
@@ -515,6 +522,15 @@ function handleStartNewGame() {
   setActiveGame(null);
   initPendingPresent();
   availabilityExpanded = true;
+  refresh();
+}
+
+function handleToggleGameStarted() {
+  const ag = getActiveGame();
+  if (!ag) return;
+  const next = JSON.parse(JSON.stringify(ag));
+  next.gameStarted = !next.gameStarted;
+  setActiveGame(next);
   refresh();
 }
 

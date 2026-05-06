@@ -638,6 +638,30 @@ body {
   border-color: var(--color-border);
   cursor: default;
 }
+.game-started .game-bottom-bar [data-action="update"] { display: none; }
+
+/* Start / End Game button bar (above the grid) */
+.game-toggle-bar {
+  padding: 8px 12px 0;
+}
+.game-toggle-btn {
+  width: 100%;
+  padding: 12px 8px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-game-end {
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+.btn-game-end:active {
+  background: var(--color-danger-bg);
+}
 
 /* Warning panel (mounted above the inning list) */
 .warning-panel {
@@ -1348,6 +1372,7 @@ body {
   width: 1%;
 }
 .player-grid-name-label { display: block; }
+.game-started .player-grid-name-label { display: none; }
 .player-grid-name-status {
   display: block;
   margin-top: 4px;
@@ -1357,7 +1382,7 @@ body {
   white-space: nowrap;
 }
 .player-grid-end-btn {
-  display: block;
+  display: none;
   margin-top: 4px;
   padding: 10px 10px;
   min-height: 44px;
@@ -1372,6 +1397,7 @@ body {
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
+.game-started .player-grid-end-btn { display: block; }
 .player-grid-end-btn:active { background: var(--color-bg); }
 .player-grid tbody tr.player-grid-row-complete > th.player-grid-name,
 .player-grid tbody tr.player-grid-row-complete > td {
@@ -1399,7 +1425,7 @@ body {
   position: relative;
 }
 .player-grid .player-grid-cell.cell-manual {
-  box-shadow: inset 3px 0 0 var(--color-primary);
+  box-shadow: none;
 }
 .player-grid td.player-grid-bench {
   color: var(--color-text-tertiary);
