@@ -1,6 +1,5 @@
 import { mountPlayersTab } from './ui/tab-players.js';
 import { mountGameTab } from './ui/tab-game.js';
-import { mountGameSummaryTab } from './ui/tab-game-summary.js';
 import { mountSavedTab } from './ui/tab-saved.js';
 import { mountSettingsTab } from './ui/tab-settings.js';
 import { showToast } from './ui/toast.js';
@@ -19,16 +18,8 @@ const TABS = {
     title: 'Game',
     mount: (c) => mountGameTab(c),
   },
-  'game-summary': {
-    title: 'Game Summary',
-    mount: (c) => mountGameSummaryTab(c),
-  },
-  season: {
-    title: 'Season',
-    mount: (c) => placeholderMount(c, 'Season Summary', 'Cross-game totals land in Phase 4.'),
-  },
-  saved: {
-    title: 'Saved Games',
+  history: {
+    title: 'History',
     mount: (c) => mountSavedTab(c),
   },
   settings: {
@@ -81,9 +72,9 @@ function showOnboardingIfNeeded() {
 
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.register('./service-worker.js', { scope: './' }).catch((err) => {
+  /* navigator.serviceWorker.register('./service-worker.js', { scope: './' }).catch((err) => {
     console.warn('Service worker registration failed:', err);
-  });
+  }); */
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'NEW_VERSION') {
       showToast('New version installed — reload to apply.', { durationMs: 0, dismissible: true });

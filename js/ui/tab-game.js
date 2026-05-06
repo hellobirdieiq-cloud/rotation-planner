@@ -31,6 +31,7 @@ let viewModeRestored = false;
 // Collapsible-section state. null = uninitialized; once set, persists across refreshes.
 // Default rule: expanded before first Update Lineup; auto-collapsed after Update Lineup.
 let availabilityExpanded = null;
+let completedExpanded = false;
 export function mountGameTab(container) {
   mountEl = container;
   initPendingPresent();
@@ -86,26 +87,40 @@ function renderHtml() {
   const sittingCount = active.length - presentCount;
 
   const playerWord = presentCount === 1 ? 'player' : 'players';
+  const completedInnings = (ag?.completedInnings || []);
 
   return `
     <div class="game-tab-root${inGame ? ' game-started' : ''}">
-      <details class="game-availability" id="availability-section"${availabilityExpanded ? ' open' : ''}>
-        <summary class="availability-summary">
-          <span class="availability-title">Pre-game availability</span>
-          <span class="availability-meta" id="availability-meta">(${presentCount} ${playerWord})</span>
-        </summary>
-        <div class="availability-body">
-          ${active.length === 0
-            ? '<div class="placeholder">No active players in your roster yet.</div>'
-            : `<div class="present-list">${active.map(presentRowHtml).join('')}</div>`}
-          <div class="present-summary">
-            <span id="present-count">${presentCount} present · ${sittingCount} sitting</span>
-            <label class="innings-input">Innings
-              <input type="number" id="total-innings" min="1" max="9" value="${ag ? ag.totalInnings : 6}">
-            </label>
+      <div class="game-top-panels">
+        <details class="game-availability" id="availability-section"${availabilityExpanded ? ' open' : ''}>
+          <summary class="availability-summary">
+            <span class="availability-title">Pre-game availability</span>
+            <span class="availability-meta" id="availability-meta">(${presentCount} ${playerWord})</span>
+          </summary>
+          <div class="availability-body">
+            ${active.length === 0
+              ? '<div class="placeholder">No active players in your roster yet.</div>'
+              : `<div class="present-list">${active.map(presentRowHtml).join('')}</div>`}
+            <div class="present-summary">
+              <span id="present-count">${presentCount} present · ${sittingCount} sitting</span>
+              <label class="innings-input">Innings
+                <input type="number" id="total-innings" min="1" max="9" value="${ag ? ag.totalInnings : 6}">
+              </label>
+            </div>
           </div>
-        </div>
-      </details>
+        </details>
+        ${completedInnings.length > 0 ? `
+        <details class="game-completed-innings">
+          <summary class="availability-summary">
+            <span class="availability-title">Completed</span>
+            <span class="availability-meta">(${completedInnings.length} ${completedInnings.length === 1 ? 'inning' : 'innings'})</span>
+          </summary>
+          <div class="availability-body">
+            ${completedInnings.map((idx) => `<div class="completed-inning-item">Inning ${idx + 1} ✓</div>`).join('')}
+          </div>
+        </details>
+        ` : ''}
+      </div>
 
       ${ag ? `
         <div class="game-meta">
@@ -129,7 +144,6 @@ function renderHtml() {
       <div class="game-bottom-bar">
         <button class="btn-bottom" type="button" data-action="update">Update Lineup</button>
         <button class="btn-bottom" type="button" data-action="save"${ag ? '' : ' disabled'}>Save</button>
-        <button class="btn-bottom" type="button" data-action="new-game"${ag ? '' : ' disabled'}>Restart Game</button>
       </div>
     </div>
   `;
@@ -148,21 +162,34 @@ function presentRowHtml(p) {
 }
 
 function renderInningCards(ag) {
+  const completedSet = new Set(ag.completedInnings || []);
+  const activeInnings = ag.schedule.filter((inn) => !completedSet.has(inn.index));
+  const completedInnings = ag.schedule.filter((inn) => completedSet.has(inn.index));
+  const toggleBtn = completedInnings.length > 0
+    ? `<button class="toggle-completed-btn" type="button" data-action="toggle-completed">${completedExpanded ? 'Hide' : 'Show'} completed (${completedInnings.length})</button>`
+    : '';
+  const completedCards = completedExpanded
+    ? `<div class="inning-columns">${completedInnings.map((inn) => renderInningCard(ag, inn)).join('')}</div>`
+    : '';
   return `
     <div id="warning-mount"></div>
-    <div class="inning-columns">${ag.schedule.map((inn) => renderInningCard(ag, inn)).join('')}</div>
+    <div class="inning-columns">${activeInnings.map((inn) => renderInningCard(ag, inn)).join('')}</div>
+    ${toggleBtn}
+    ${completedCards}
   `;
 }
 
 function renderPlayerGrid(ag) {
   const innings = ag.schedule || [];
   const completed = ag.completedInnings || [];
+  const lockedInnings = ag.lockedInnings || [];
   const players = ag.presentPlayers || [];
 
   const headerCells = players.map((pid) => `<th scope="col">${esc(nameOf(ag, pid))}</th>`).join('');
 
   const rows = innings.map((inn) => {
     const isCompleted = completed.includes(inn.index);
+    const isLocked = lockedInnings.includes(inn.index);
     const cells = players.map((pid) => {
       const cell = inn.cells[pid];
       const rawAssignment = cell && cell.assignment ? cell.assignment : '—';
@@ -185,7 +212,7 @@ function renderPlayerGrid(ag) {
           <span class="player-grid-name-label">Inning ${inn.index + 1}</span>
           ${isCompleted
             ? '<span class="player-grid-name-status">✓ Complete</span>'
-            : `<button class="player-grid-end-btn" type="button" data-action="mark" data-inning="${inn.index}">End Inning ${inn.index + 1}</button>`}
+            : `<button class="player-grid-end-btn${isLocked ? ' is-locked' : ''}" type="button" data-action="mark" data-inning="${inn.index}">${isLocked ? '🔒 ' : ''}Inning ${inn.index + 1} ›</button>`}
         </th>
         ${cells}
       </tr>
@@ -242,6 +269,7 @@ function renderPlayerGrid(ag) {
 
 function renderInningCard(ag, inn) {
   const isCompleted = (ag.completedInnings || []).includes(inn.index);
+  const isLocked = (ag.lockedInnings || []).includes(inn.index);
   const layout = layoutFor((ag.presentPlayers || []).length) || [];
   const cellByPos = {};
   const benched = [];
@@ -252,13 +280,38 @@ function renderInningCard(ag, inn) {
     else cellByPos[cell.assignment] = { pid, locked: cell.locked, manual: cell.manual };
   }
 
+  const pitcherEntry = Object.entries(inn.cells).find(([, c]) => c && c.assignment === 'P');
+  const pitcherPid = pitcherEntry ? pitcherEntry[0] : null;
+  const pitchEntered = pitcherPid && ag.pitchAppearances && ag.pitchAppearances[pitcherPid]
+    && ag.pitchAppearances[pitcherPid].perInning
+    ? ag.pitchAppearances[pitcherPid].perInning[inn.index]
+    : null;
+  const pitchLabel = pitchEntered != null
+    ? `${pitchEntered} ${pitchEntered === 1 ? 'pitch' : 'pitches'}`
+    : 'pitches';
+  const pitchRow = '';
+
   const positionRows = layout.map((pos) => {
     const c = cellByPos[pos];
     const playerName = c ? nameOf(ag, c.pid) : '—';
     const lockIcon = c && c.locked ? '🔒 ' : '';
     const manualClass = c && c.manual ? ' cell-manual' : '';
+    if (pos === 'P' && pitcherPid) {
+      return `
+        <div class="inn-cell inn-cell-pitcher${manualClass}">
+          <button class="inn-cell-name" type="button" data-cell="${inn.index}|${pos}"${isCompleted ? ' disabled' : ''}>
+            <span class="cell-pos">P</span>
+            <span class="cell-player">${lockIcon}${esc(playerName)}</span>
+          </button>
+          <button class="inn-pitches-inline" type="button" data-pitch-inning="${inn.index}" data-pitch-pid="${esc(pitcherPid)}"${isCompleted ? ' disabled' : ''}>
+            <span class="pitch-count${pitchEntered != null ? '' : ' pitch-empty'}">· ${pitchLabel}</span>
+          </button>
+        </div>
+      `;
+    }
+    const emptyClass = playerName === '—' ? ' inn-cell-empty' : '';
     return `
-      <button class="inn-cell${manualClass}" type="button" data-cell="${inn.index}|${pos}"${isCompleted ? ' disabled' : ''}>
+      <button class="inn-cell${manualClass}${emptyClass}" type="button" data-cell="${inn.index}|${pos}"${isCompleted ? ' disabled' : ''}>
         <span class="cell-pos">${pos}</span>
         <span class="cell-player">${lockIcon}${esc(playerName)}</span>
       </button>
@@ -272,36 +325,26 @@ function renderInningCard(ag, inn) {
     </div>
   ` : '';
 
-  // Pitch row — visible whenever someone is at P this inning.
-  const pitcherEntry = Object.entries(inn.cells).find(([, c]) => c && c.assignment === 'P');
-  const pitcherPid = pitcherEntry ? pitcherEntry[0] : null;
-  const pitchEntered = pitcherPid && ag.pitchAppearances && ag.pitchAppearances[pitcherPid]
-    && ag.pitchAppearances[pitcherPid].perInning
-    ? ag.pitchAppearances[pitcherPid].perInning[inn.index]
-    : null;
-  const pitchLabel = pitchEntered != null
-    ? `${pitchEntered} ${pitchEntered === 1 ? 'pitch' : 'pitches'}`
-    : 'tap to enter';
-  const pitchRow = pitcherPid ? `
-    <button class="inn-pitches" type="button" data-pitch-inning="${inn.index}" data-pitch-pid="${esc(pitcherPid)}"${isCompleted ? ' disabled' : ''}>
-      <span class="cell-pos">⚾</span>
-      <span class="cell-player">${esc(nameOf(ag, pitcherPid))}<span class="pitch-count${pitchEntered != null ? '' : ' pitch-empty'}"> · ${pitchLabel}</span></span>
-    </button>
-  ` : '';
-
-  const completeBtn = isCompleted
-    ? `<button class="btn-secondary" type="button" data-action="unmark" data-inning="${inn.index}">✓ Complete · Unmark</button>`
-    : `<button class="btn-secondary" type="button" data-action="mark" data-inning="${inn.index}">End Inning ${inn.index + 1}</button>`;
+  if (isCompleted) {
+    return `
+      <div class="inning-card completed">
+        <button class="inning-card-header-btn" type="button" data-action="open-inning-sheet" data-inning="${inn.index}">
+          <span>Inning ${inn.index + 1}</span>
+          <span class="completed-badge">✓ Complete</span>
+        </button>
+      </div>
+    `;
+  }
 
   return `
-    <div class="inning-card${isCompleted ? ' completed' : ''}">
-      <div class="inning-card-header">
-        Inning ${inn.index + 1}${isCompleted ? '<span class="completed-badge">✓ Complete</span>' : ''}
-      </div>
+    <div class="inning-card${isLocked ? ' locked' : ''}">
+      <button class="inning-card-header-btn" type="button" data-action="open-inning-sheet" data-inning="${inn.index}">
+        <span>Inning ${inn.index + 1}</span>
+        ${isLocked ? '<span class="inning-locked-badge">🔒 Locked</span>' : ''}
+      </button>
       <div class="inning-positions">${positionRows}</div>
-      ${benchRow}
       ${pitchRow}
-      <div class="inning-footer">${completeBtn}</div>
+      ${benchRow}
     </div>
   `;
 }
@@ -354,6 +397,13 @@ function bind() {
     });
   });
 
+  mountEl.querySelectorAll('.inn-cell-name:not([disabled])').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [inning, position] = btn.dataset.cell.split('|');
+      openCellSheet(parseInt(inning, 10), position);
+    });
+  });
+
   // Player-grid cell taps.
   mountEl.querySelectorAll('.player-grid-cell[data-inning][data-position]').forEach((td) => {
     td.addEventListener('click', () => {
@@ -381,12 +431,37 @@ function bind() {
     });
   });
 
+  mountEl.querySelectorAll('.inn-pitches-inline:not([disabled])').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      openPitchSheet(parseInt(btn.dataset.pitchInning, 10), btn.dataset.pitchPid);
+    });
+  });
+
+  // Open inning sheet from card header.
+  mountEl.querySelectorAll('[data-action="open-inning-sheet"]').forEach((btn) => {
+    btn.addEventListener('click', () => openInningSheet(parseInt(btn.dataset.inning, 10)));
+  });
+
+  // Toggle completed innings section in cards view.
+  mountEl.querySelector('[data-action="toggle-completed"]')?.addEventListener('click', () => {
+    completedExpanded = !completedExpanded;
+    refresh();
+  });
+
   // Mark / unmark complete.
   mountEl.querySelectorAll('[data-action="mark"]').forEach((btn) => {
-    btn.addEventListener('click', () => handleMarkComplete(parseInt(btn.dataset.inning, 10)));
+    btn.addEventListener('click', () => openInningSheet(parseInt(btn.dataset.inning, 10)));
   });
   mountEl.querySelectorAll('[data-action="unmark"]').forEach((btn) => {
     btn.addEventListener('click', () => handleUnmarkComplete(parseInt(btn.dataset.inning, 10)));
+  });
+
+  // Lock / unlock inning.
+  mountEl.querySelectorAll('[data-action="lock-inning"]').forEach((btn) => {
+    btn.addEventListener('click', () => handleLockInning(parseInt(btn.dataset.inning, 10)));
+  });
+  mountEl.querySelectorAll('[data-action="unlock-inning"]').forEach((btn) => {
+    btn.addEventListener('click', () => handleUnlockInning(parseInt(btn.dataset.inning, 10)));
   });
 
   // CSV export of the rotation grid.
@@ -529,7 +604,30 @@ function handleToggleGameStarted() {
   const ag = getActiveGame();
   if (!ag) return;
   const next = JSON.parse(JSON.stringify(ag));
-  next.gameStarted = !next.gameStarted;
+
+  // Ending the game
+  if (next.gameStarted) {
+    const completedCount = (next.completedInnings || []).length;
+    if (completedCount >= 3) {
+      // Auto-save silently
+      handleSaveGame();
+      setActiveGame(null);
+      initPendingPresent();
+      availabilityExpanded = true;
+      refresh();
+    } else {
+      const doSave = window.confirm('Save game before ending?');
+      if (doSave) handleSaveGame();
+      setActiveGame(null);
+      initPendingPresent();
+      availabilityExpanded = true;
+      refresh();
+    }
+    return;
+  }
+
+  // Starting the game
+  next.gameStarted = true;
   setActiveGame(next);
   refresh();
 }
@@ -622,6 +720,7 @@ function handleMarkComplete(inningIdx) {
   const next = JSON.parse(JSON.stringify(ag));
   if (!next.completedInnings.includes(inningIdx)) {
     next.completedInnings.push(inningIdx);
+    if (!next.gameStarted) next.gameStarted = true;
     next.completedInnings.sort((a, b) => a - b);
   }
   setActiveGame(next);
@@ -638,11 +737,66 @@ function handleUnmarkComplete(inningIdx) {
   refresh();
 }
 
+function handleLockInning(inningIdx) {
+  const ag = getActiveGame();
+  if (!ag) return;
+  const next = JSON.parse(JSON.stringify(ag));
+  next.lockedInnings = next.lockedInnings || [];
+  if (!next.lockedInnings.includes(inningIdx)) {
+    next.lockedInnings.push(inningIdx);
+    next.lockedInnings.sort((a, b) => a - b);
+  }
+  setActiveGame(next);
+  refresh();
+}
+
+function handleUnlockInning(inningIdx) {
+  const ag = getActiveGame();
+  if (!ag) return;
+  const next = JSON.parse(JSON.stringify(ag));
+  next.lockedInnings = (next.lockedInnings || []).filter((i) => i !== inningIdx);
+  setActiveGame(next);
+  refresh();
+}
+
+function openInningSheet(inningIdx) {
+  const ag = getActiveGame();
+  if (!ag) return;
+  const isLocked = (ag.lockedInnings || []).includes(inningIdx);
+  const num = inningIdx + 1;
+
+  openSheet({
+    title: `Inning ${num}`,
+    content: '',
+    actions: [
+      {
+        label: `End Inning ${num}`,
+        variant: '',
+        handler: () => { closeSheet(); handleMarkComplete(inningIdx); },
+      },
+      {
+        label: isLocked ? `Unlock Inning ${num}` : `Lock Inning ${num}`,
+        variant: '',
+        handler: () => { closeSheet(); isLocked ? handleUnlockInning(inningIdx) : handleLockInning(inningIdx); },
+      },
+      {
+        label: 'Cancel',
+        variant: 'sheet-btn-cancel',
+        handler: () => closeSheet(),
+      },
+    ],
+  });
+}
+
 function openCellSheet(inning, position, targetPid = null) {
   const ag = getActiveGame();
   if (!ag) return;
   if ((ag.completedInnings || []).includes(inning)) {
     showToast('Inning is complete. Unmark to edit.', { variant: 'danger', dismissible: true });
+    return;
+  }
+  if ((ag.lockedInnings || []).includes(inning)) {
+    showToast('Inning is locked. Unlock to edit.', { variant: 'danger', dismissible: true });
     return;
   }
   const inn = ag.schedule[inning];
@@ -680,34 +834,35 @@ function openCellSheet(inning, position, targetPid = null) {
     else if (isOutfield(where)) zonePids.outfield.push(pid);
   });
 
-  const zoneColHtml = (label, pids, modClass = '') => `
+  const zoneColHtml = (label, pids, modClass = '', extraHtml = '') => `
     <div class="cell-sheet-zone-col${modClass}">
       <div class="cell-sheet-zone-label">${label}</div>
       ${pids.length ? pids.map(renderChip).join('') : '<div class="cell-sheet-zone-empty">—</div>'}
+      ${extraHtml}
     </div>
   `;
 
+  const sendBenchBtnHtml = currentPid
+    ? `<button class="cell-sheet-send-bench" type="button" data-action="clear"${currentCell && currentCell.assignment === 'BN' ? ' disabled' : ''}>Send to bench</button>`
+    : '';
+
   const zonesHtml = `
     <div class="cell-sheet-zone-grid">
-      ${zoneColHtml('Bench', zonePids.bench, ' cell-sheet-zone-bench')}
+      ${zoneColHtml('Bench', zonePids.bench, ' cell-sheet-zone-bench', sendBenchBtnHtml)}
       ${zoneColHtml('P · C', zonePids.pc)}
       ${zoneColHtml('Infield', zonePids.infield)}
       ${zoneColHtml('Outfield', zonePids.outfield)}
     </div>
   `;
 
-  const sendBenchHtml = currentPid
-    ? `<button class="btn-secondary cell-sheet-send-bench" type="button" data-action="clear"${currentCell && currentCell.assignment === 'BN' ? ' disabled' : ''}>Send to bench</button>`
-    : '';
-
   const positionLabel = POSITION_LABELS[position] || position;
   const lockRowHtml = currentPid
-    ? `<button class="cell-sheet-lock-row${isLocked ? ' is-locked' : ''}" type="button" data-action="toggle-lock">
+    ? `<div class="cell-sheet-lock-row${isLocked ? ' is-locked' : ''}">
          <span class="cell-sheet-lock-row-text">
            <span class="cell-sheet-lock-row-name">${esc(currentName)}</span> is ${esc(positionLabel)} — Inning ${inning + 1}
          </span>
-         <span class="cell-sheet-lock-row-toggle">${isLocked ? '🔒 Locked' : '🔓 Lock'}</span>
-       </button>`
+         <button class="cell-sheet-lock-btn${isLocked ? ' is-locked' : ''}" type="button" data-action="toggle-lock">${isLocked ? '🔒 Locked' : 'Lock'}</button>
+       </div>`
     : `<div class="cell-sheet-lock-row cell-sheet-lock-row-empty">
          <span class="cell-sheet-lock-row-text">No player assigned at ${esc(positionLabel)} — Inning ${inning + 1}</span>
        </div>`;
@@ -717,7 +872,6 @@ function openCellSheet(inning, position, targetPid = null) {
     <div class="cell-sheet-section">
       ${zonesHtml}
     </div>
-    ${sendBenchHtml}
   `;
 
   wrap.querySelectorAll('.player-chip[data-target-pid]:not([disabled])').forEach((chip) => {

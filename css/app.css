@@ -20,6 +20,34 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #3b82f6;
+    --color-primary-dark: #2563eb;
+    --color-bg: #1e1e1e;
+    --color-bg-secondary: #252526;
+    --color-text: #d4d4d4;
+    --color-text-secondary: #999999;
+    --color-text-tertiary: #666666;
+    --color-border: #4a4a4c;
+    --color-danger: #f87171;
+    --color-danger-bg: #3a1e1e;
+    --color-warning: #fbbf24;
+    --color-warning-bg: #3a2e1e;
+    --color-success: #4ade80;
+    --color-success-bg: #1e3a2f;
+    --color-pitcher-bg: var(--color-bg);
+    --color-pitcher-summary-bg: #2a2a1a;
+    --color-grid-row-alt: #252526;
+    --color-bench-bg: #252526;
+    --color-bench-border: #3a3a3c;
+    --color-bench-label: #b8860b;
+    --color-lock-bg: #2a2010;
+    --color-lock-border: #5a4a20;
+    --color-lock-hover: #352810;
+  }
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -280,6 +308,7 @@ body {
 .sheet-actions {
   flex: 0 0 auto;
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 12px 16px;
   border-top: 1px solid var(--color-border);
@@ -288,6 +317,7 @@ body {
 
 .sheet-btn {
   flex: 1;
+  width: 100%;
   padding: 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -404,11 +434,66 @@ body {
   padding: 0 4px;
 }
 
+.game-top-panels {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.game-top-panels .game-availability,
+.game-top-panels .game-completed-innings {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.completed-inning-item {
+  padding: 6px 12px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.game-completed-innings .availability-summary {
+  border: 1px solid var(--color-border);
+}
+
+.game-completed-innings > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  list-style: none;
+}
+
+.game-completed-innings > summary::-webkit-details-marker { display: none; }
+.game-completed-innings > summary::marker { content: ""; }
+.game-completed-innings > summary::after {
+  content: "›";
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  transition: transform 0.15s;
+}
+.game-completed-innings[open] > summary::after {
+  transform: rotate(90deg);
+}
+
 .game-availability {
   background: var(--color-bg);
   border-radius: var(--radius-md);
   margin-bottom: 12px;
   overflow: hidden;
+  border: 1px solid var(--color-border);
 }
 .availability-summary {
   list-style: none;
@@ -514,6 +599,7 @@ body {
   overflow-x: auto;
   padding-bottom: calc(110px + env(safe-area-inset-bottom));
   scroll-snap-type: x proximity;
+  align-items: flex-start;
 }
 
 .inning-columns .inning-card {
@@ -529,8 +615,11 @@ body {
   overflow: hidden;
 }
 .inning-card.completed {
-  background: #e8f7ee;
-  border-color: #4caf50;
+  background: transparent;
+  border-color: var(--color-border);
+}
+.inning-card.locked {
+  border-color: #fbbf24;
 }
 .inning-card-header {
   font-size: 14px;
@@ -573,6 +662,57 @@ body {
 .inn-cell:active { background: var(--color-bg-secondary); }
 .inn-cell:disabled { cursor: default; opacity: 0.7; }
 .inn-cell.cell-manual { border-left: 3px solid var(--color-primary); }
+
+.inn-cell-pitcher {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  border-left: none;
+  padding: 0;
+}
+
+.inn-cell-pitcher .inn-cell-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inn-cell-pitcher .inn-cell-name .cell-pos {
+  flex: 0 0 36px;
+}
+
+.inn-cell-pitcher .inn-pitches-inline {
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inn-cell-pitcher .inn-pitches-inline:active {
+  background: var(--color-bg-secondary);
+}
+
+.inn-cell-pitcher .pitch-empty {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
 
 .cell-pos {
   flex: 0 0 36px;
@@ -638,8 +778,6 @@ body {
   border-color: var(--color-border);
   cursor: default;
 }
-.game-started .game-bottom-bar [data-action="update"] { display: none; }
-
 /* Start / End Game button bar (above the grid) */
 .game-toggle-bar {
   padding: 8px 12px 0;
@@ -721,13 +859,14 @@ body {
 }
 .cell-sheet-lock-row {
   display: flex;
-  width: 100%;
+  width: auto;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   padding: 10px 14px;
   margin-bottom: 16px;
-  border: 1px solid var(--color-border);
+  border: none;
   border-radius: var(--radius-md);
   background: var(--color-bg);
   color: var(--color-text);
@@ -738,13 +877,32 @@ body {
   -webkit-tap-highlight-color: transparent;
   transition: background 0.12s, border-color 0.12s;
 }
+.cell-sheet-lock-btn {
+  flex: 0 0 auto;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.cell-sheet-lock-btn.is-locked {
+  color: var(--color-bench-label, #92400e);
+  border-color: var(--color-bench-border, #f59e0b);
+  background: var(--color-bench-bg, #fff8e1);
+}
 .cell-sheet-lock-row:hover { background: var(--color-bg-secondary); }
 .cell-sheet-lock-row:active { background: var(--color-bg-secondary); }
 .cell-sheet-lock-row.is-locked {
-  background: #fff8e1;
-  border-color: #f59e0b;
+  background: var(--color-bench-bg, #fff8e1);
+  border-color: var(--color-bench-border, #f59e0b);
 }
-.cell-sheet-lock-row.is-locked:hover { background: #ffefc4; }
+.cell-sheet-lock-row.is-locked:hover { background: var(--color-lock-hover, #ffefc4); }
 .cell-sheet-lock-row-text {
   flex: 1 1 auto;
   min-width: 0;
@@ -757,7 +915,7 @@ body {
   color: var(--color-primary);
   white-space: nowrap;
 }
-.cell-sheet-lock-row.is-locked .cell-sheet-lock-row-toggle { color: #92400e; }
+.cell-sheet-lock-row.is-locked .cell-sheet-lock-row-toggle { color: var(--color-bench-label, #92400e); }
 .cell-sheet-lock-row-empty {
   cursor: default;
   color: var(--color-text-secondary);
@@ -809,7 +967,7 @@ body {
 .player-chip:active { background: var(--color-bg-secondary); }
 .player-chip.current {
   border-color: var(--color-primary);
-  background: #eff6ff;
+  background: var(--color-bg);
 }
 .player-chip.chip-locked {
   opacity: 0.55;
@@ -827,7 +985,7 @@ body {
   color: var(--color-text-tertiary);
 }
 .cell-sheet-group-label:has(+ .player-chips-bench) {
-  background: #fff8e1;
+  background: var(--color-bench-bg, #fff8e1);
   padding: 6px 10px;
   border-radius: var(--radius-md);
 }
@@ -856,16 +1014,21 @@ body {
   padding: 10px;
 }
 .cell-sheet-send-bench {
-  display: block;
   width: 100%;
-  margin-top: 16px;
-  padding: 12px;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
+  margin-top: 8px;
+  padding: 10px 12px;
+  min-height: 44px;
+  font-size: 14px;
   font-weight: 500;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: center;
 }
-.cell-sheet-send-bench:active { background: var(--color-bg); }
+.cell-sheet-send-bench:active { background: var(--color-bg-secondary); }
 .cell-sheet-send-bench:disabled {
   opacity: 0.5;
   cursor: default;
@@ -891,8 +1054,8 @@ body {
   min-height: 64px;
 }
 .cell-sheet-zone-col.cell-sheet-zone-bench {
-  background: #fff8e1;
-  border-color: #fcd34d;
+  background: var(--color-bench-bg, #fff8e1);
+  border-color: var(--color-border);
 }
 .cell-sheet-zone-label {
   font-size: 11px;
@@ -907,8 +1070,8 @@ body {
   white-space: nowrap;
 }
 .cell-sheet-zone-bench .cell-sheet-zone-label {
-  color: #92400e;
-  border-bottom-color: #fcd34d;
+  color: var(--color-bench-label, #92400e);
+  border-bottom-color: var(--color-border);
 }
 .cell-sheet-zone-col .player-chip {
   width: 100%;
@@ -917,7 +1080,7 @@ body {
   min-width: 0;
 }
 .cell-sheet-zone-col .chip-name {
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -925,16 +1088,16 @@ body {
   max-width: 100%;
 }
 .cell-sheet-zone-col .chip-where {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.15;
 }
 .cell-sheet-zone-col .player-chip.pending {
   border-color: var(--color-primary);
-  background: var(--color-primary);
+  background: var(--color-bg);
   box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.3);
 }
-.cell-sheet-zone-col .player-chip.pending .chip-name { color: #fff; }
-.cell-sheet-zone-col .player-chip.pending .chip-where { color: rgba(255, 255, 255, 0.85); }
+.cell-sheet-zone-col .player-chip.pending .chip-name { color: var(--color-text); }
+.cell-sheet-zone-col .player-chip.pending .chip-where { color: var(--color-text-secondary); }
 .cell-sheet-zone-empty {
   font-size: 12px;
   color: var(--color-text-tertiary);
@@ -949,7 +1112,7 @@ body {
   gap: 12px;
   width: 100%;
   padding: 10px 12px;
-  background: #fefce8; /* faint pitcher-yellow */
+  background: var(--color-pitcher-bg, #fefce8); /* faint pitcher-yellow */
   border: 0;
   border-bottom: 1px solid var(--color-border);
   font-family: inherit;
@@ -1117,7 +1280,7 @@ body {
   margin-right: 4px;
 }
 .summary-pitch-cell {
-  background: #fefce8;
+  background: var(--color-pitcher-summary-bg, #fefce8);
   color: #854d0e;
   padding: 2px 8px;
   border-radius: 999px;
@@ -1351,7 +1514,7 @@ body {
 }
 .player-grid thead th {
   background: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
+  color: var(--color-text);
   font-weight: 600;
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -1364,14 +1527,20 @@ body {
   left: 0;
   background: var(--color-bg);
   z-index: 1;
-  font-weight: 500;
+  color: var(--color-text);
+  font-weight: 600;
   font-size: 13px;
   padding: 4px 8px;
   border-right: 1px solid var(--color-border);
-  min-width: 0;
+  min-width: 110px;
   width: 1%;
 }
-.player-grid-name-label { display: block; }
+.player-grid-name-label {
+  display: block;
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 13px;
+}
 .game-started .player-grid-name-label { display: none; }
 .player-grid-name-status {
   display: block;
@@ -1387,23 +1556,34 @@ body {
   padding: 10px 10px;
   min-height: 44px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   font-family: inherit;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-primary);
   background: var(--color-bg-secondary);
   color: var(--color-text);
   border-radius: 6px;
   cursor: pointer;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
+  width: 100%;
 }
 .game-started .player-grid-end-btn { display: block; }
 .player-grid-end-btn:active { background: var(--color-bg); }
+.player-grid-end-btn.is-locked {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
 .player-grid tbody tr.player-grid-row-complete > th.player-grid-name,
 .player-grid tbody tr.player-grid-row-complete > td {
-  background: #e8f7ee;
+  background: transparent;
   color: var(--color-text-tertiary);
-  border-bottom-color: #4caf50;
+  border-bottom-color: var(--color-border);
+}
+
+.player-grid tbody tr.player-grid-row-complete .player-grid-pos-btn {
+  color: var(--color-text-tertiary);
+  border-color: var(--color-border);
+  background: transparent;
 }
 .player-grid .player-grid-corner {
   position: sticky;
@@ -1418,7 +1598,7 @@ body {
 }
 .player-grid tbody tr:nth-child(even) > td,
 .player-grid tbody tr:nth-child(even) > th.player-grid-name {
-  background: #f2f3f5;
+  background: var(--color-grid-row-alt, #f2f3f5);
 }
 .player-grid .player-grid-cell {
   color: var(--color-text);
@@ -1435,15 +1615,15 @@ body {
   position: relative;
   border-radius: 6px;
   transition: background 0.12s, box-shadow 0.12s, transform 0.08s;
-  text-decoration: underline dotted rgba(37, 99, 235, 0.4);
+  text-decoration: underline dotted color-mix(in srgb, var(--color-primary) 40%, transparent);
   text-underline-offset: 3px;
 }
 .player-grid-cell[data-inning][data-position]:hover {
-  background: rgba(37, 99, 235, 0.14);
-  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.35);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 .player-grid-cell[data-inning][data-position]:active {
-  background: rgba(37, 99, 235, 0.22);
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
   box-shadow: inset 0 0 0 2px var(--color-primary);
   transform: scale(0.98);
 }
@@ -1524,13 +1704,86 @@ body {
   justify-content: center;
   font-size: 13px;
   font-weight: 600;
-  color: #FF4500;
-  background: rgba(255, 69, 0, 0.07);
-  border: 1px solid rgba(255, 69, 0, 0.2);
+  color: #ffffff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 6px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 .player-grid-pos-btn:active {
   background: rgba(255, 69, 0, 0.18);
+}
+
+.btn-inn-lock {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-inn-lock.locked {
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.inn-action-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.inn-action-row .player-grid-end-btn {
+  flex: 1;
+}
+
+.inning-card-header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.inning-locked-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fbbf24;
+  border: 1px solid #fbbf24;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.inn-cell.inn-cell-empty {
+  color: var(--color-text-tertiary);
+  border: 1px dashed var(--color-border);
+  opacity: 0.6;
+}
+
+.toggle-completed-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  text-align: center;
 }

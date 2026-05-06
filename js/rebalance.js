@@ -11,12 +11,13 @@ export function rebalance(activeGame) {
   }
 
   const completed = new Set(activeGame.completedInnings || []);
+  const lockedInns = new Set(activeGame.lockedInnings || []);
   const effectiveLocks = [];
   activeGame.schedule.forEach((inn, idx) => {
     const isCompleted = completed.has(idx);
     for (const [pid, cell] of Object.entries(inn.cells)) {
       if (!cell) continue;
-      if (isCompleted || cell.locked) {
+      if (isCompleted || lockedInns.has(idx) || cell.locked) {
         effectiveLocks.push({ inning: idx, playerId: pid, position: cell.assignment });
       }
     }
@@ -39,10 +40,11 @@ export function rebalance(activeGame) {
   // computed assignment.
   const newSchedule = result.schedule.map((inn, idx) => {
     const wasCompleted = completed.has(idx);
+    const wasLocked = lockedInns.has(idx);
     const out = { index: idx, cells: {} };
     for (const [pid, cell] of Object.entries(inn.cells)) {
       const original = activeGame.schedule[idx] && activeGame.schedule[idx].cells[pid];
-      if (wasCompleted) {
+      if (wasCompleted || wasLocked) {
         out.cells[pid] = original || cell;
       } else if (original && original.locked) {
         out.cells[pid] = original;
