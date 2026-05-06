@@ -918,57 +918,6 @@ body {
   padding: 10px 0;
 }
 
-/* Swap preview */
-.cell-sheet-swap-preview {
-  background: var(--color-bg-secondary);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  margin: 0 0 10px;
-  font-size: 13px;
-  text-align: center;
-  color: var(--color-text-secondary);
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.cell-sheet-swap-preview[data-state="pending"] {
-  background: #eff6ff;
-  border: 1px solid var(--color-primary);
-  color: var(--color-text);
-}
-.cell-sheet-swap-preview .swap-preview-text {
-  word-break: break-word;
-}
-.cell-sheet-swap-preview .swap-preview-text strong {
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-/* Confirm swap button */
-.btn-confirm-swap {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  background: var(--color-primary);
-  color: #fff;
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn-confirm-swap:active { background: var(--color-primary-dark); }
-.btn-confirm-swap:disabled {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-tertiary);
-  border-color: var(--color-border);
-  cursor: default;
-}
-
 /* === Pitch entry row === */
 .inn-pitches {
   display: flex;
@@ -1360,11 +1309,13 @@ body {
   width: max-content;
   min-width: unset;
   font-size: 13px;
+  table-layout: fixed;
 }
 .player-grid th,
 .player-grid td {
   padding: 14px 8px;
   min-height: 44px;
+  min-width: 72px;
   text-align: center;
   white-space: nowrap;
   border-bottom: 1px solid var(--color-border);
@@ -1445,6 +1396,7 @@ body {
 }
 .player-grid .player-grid-cell {
   color: var(--color-text);
+  position: relative;
 }
 .player-grid .player-grid-cell.cell-manual {
   box-shadow: inset 3px 0 0 var(--color-primary);
@@ -1535,4 +1487,24 @@ body {
 
 .cell-sheet-subsection + .cell-sheet-subsection {
   margin-top: 8px;
+}
+
+/* === Player-grid position button (tappable label opens bottom sheet) === */
+.player-grid-pos-btn {
+  width: 52px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FF4500;
+  background: rgba(255, 69, 0, 0.07);
+  border: 1px solid rgba(255, 69, 0, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.player-grid-pos-btn:active {
+  background: rgba(255, 69, 0, 0.18);
 }

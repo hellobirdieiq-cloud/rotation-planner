@@ -31,7 +31,6 @@ let viewModeRestored = false;
 // Collapsible-section state. null = uninitialized; once set, persists across refreshes.
 // Default rule: expanded before first Update Lineup; auto-collapsed after Update Lineup.
 let availabilityExpanded = null;
-
 export function mountGameTab(container) {
   mountEl = container;
   initPendingPresent();
@@ -171,7 +170,8 @@ function renderPlayerGrid(ag) {
       const dataAttrs = clickable
         ? ` data-inning="${inn.index}" data-position="${esc(rawAssignment)}"${isBench ? ` data-player-id="${esc(pid)}"` : ''}`
         : '';
-      return `<td class="player-grid-cell${manualClass}${benchClass}${lockedClass}"${dataAttrs}>${lockIcon}${esc(display)}</td>`;
+      const posBtnHtml = `<button class="player-grid-pos-btn" type="button" data-swap-inning="${inn.index}" data-swap-position="${esc(rawAssignment)}"${isBench ? ` data-swap-pid="${esc(pid)}"` : ''}${isCompleted ? ' data-swap-completed="true"' : ''} aria-label="Swap player">${esc(display)}</button>`;
+      return `<td class="player-grid-cell${manualClass}${benchClass}${lockedClass}"${dataAttrs}>${lockIcon}${posBtnHtml}</td>`;
     }).join('');
     return `
       <tr${isCompleted ? ' class="player-grid-row-complete"' : ''}>
@@ -351,6 +351,19 @@ function bind() {
   mountEl.querySelectorAll('.player-grid-cell[data-inning][data-position]').forEach((td) => {
     td.addEventListener('click', () => {
       openCellSheet(parseInt(td.dataset.inning, 10), td.dataset.position, td.dataset.playerId || null);
+    });
+  });
+
+  // Player-grid position-button taps — open the bottom sheet.
+  mountEl.querySelectorAll('.player-grid-pos-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.swapCompleted === 'true') {
+        showToast('Inning is complete. Unmark to swap.', { variant: 'danger', dismissible: true });
+        return;
+      }
+      const inning = parseInt(btn.dataset.swapInning, 10);
+      const position = btn.dataset.swapPosition;
+      openCellSheet(inning, position);
     });
   });
 
@@ -688,74 +701,29 @@ function openCellSheet(inning, position, targetPid = null) {
     <div class="cell-sheet-section">
       ${zonesHtml}
     </div>
-    <div class="cell-sheet-swap-preview" id="swap-preview" data-state="empty">
-      <span class="swap-preview-text">Tap a player to preview a swap</span>
-    </div>
-    <button class="btn-confirm-swap" type="button" data-action="confirm-swap" disabled>Confirm swap</button>
     ${sendBenchHtml}
   `;
-
-  let pendingSwapPid = null;
-
-  const updateSwapPreview = () => {
-    const previewEl = wrap.querySelector('#swap-preview');
-    const previewTextEl = previewEl.querySelector('.swap-preview-text');
-    const confirmBtn = wrap.querySelector('[data-action="confirm-swap"]');
-
-    wrap.querySelectorAll('.player-chip').forEach((c) => c.classList.remove('pending'));
-
-    if (!pendingSwapPid) {
-      previewEl.dataset.state = 'empty';
-      previewTextEl.textContent = 'Tap a player to preview a swap';
-      confirmBtn.disabled = true;
-      return;
-    }
-
-    const pendingChip = wrap.querySelector(`.player-chip[data-target-pid="${pendingSwapPid}"]`);
-    if (pendingChip) pendingChip.classList.add('pending');
-
-    const pendingName = nameOf(ag, pendingSwapPid);
-    const pendingWhere = inn.cells[pendingSwapPid] ? inn.cells[pendingSwapPid].assignment : 'BN';
-
-    previewEl.dataset.state = 'pending';
-    if (currentPid) {
-      previewTextEl.innerHTML = `<strong>${esc(currentName)}</strong> (${esc(position)}) ↔ <strong>${esc(pendingName)}</strong> (${esc(pendingWhere)})`;
-    } else {
-      previewTextEl.innerHTML = `Place <strong>${esc(pendingName)}</strong> at ${esc(position)}`;
-    }
-    confirmBtn.disabled = false;
-  };
 
   wrap.querySelectorAll('.player-chip[data-target-pid]:not([disabled])').forEach((chip) => {
     chip.addEventListener('click', () => {
       const newPid = chip.dataset.targetPid;
-      if (newPid === currentPid) {
-        pendingSwapPid = null;
-        updateSwapPreview();
+      if (newPid === currentPid) return;
+      const result = applyEdit(ag, { inning, position, newPlayerId: newPid });
+      if (result.rejected) {
+        showToast(result.reason, { variant: 'danger', dismissible: true, durationMs: 0 });
         return;
       }
-      pendingSwapPid = (pendingSwapPid === newPid) ? null : newPid;
-      updateSwapPreview();
+      setActiveGame(result.nextGame);
+      closeSheet();
+      refresh();
+      if (result.ripples && result.ripples.length > 0) {
+        const wm = mountEl.querySelector('#warning-mount');
+        if (wm) renderWarningPanel(
+          wm,
+          result.ripples.map((r) => `Inning ${r.inning + 1}: ${r.reason}`)
+        );
+      }
     });
-  });
-
-  wrap.querySelector('[data-action="confirm-swap"]').addEventListener('click', () => {
-    if (!pendingSwapPid) return;
-    const result = applyEdit(ag, { inning, position, newPlayerId: pendingSwapPid });
-    if (result.rejected) {
-      showToast(result.reason, { variant: 'danger', dismissible: true, durationMs: 0 });
-      return;
-    }
-    setActiveGame(result.nextGame);
-    closeSheet();
-    refresh();
-    if (result.ripples && result.ripples.length > 0) {
-      const wm = mountEl.querySelector('#warning-mount');
-      if (wm) renderWarningPanel(
-        wm,
-        result.ripples.map((r) => `Inning ${r.inning + 1}: ${r.reason}`)
-      );
-    }
   });
 
   wrap.querySelector('[data-action="toggle-lock"]')?.addEventListener('click', () => {
