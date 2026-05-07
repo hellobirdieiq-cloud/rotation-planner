@@ -457,13 +457,16 @@ function bind() {
   });
 
   // Delegated listener for undo-complete on completed Inning Overview rows.
-  // Attached to .player-grid-wrap (recreated each render) to avoid listener accumulation on mountEl.
-  mountEl.querySelector('.player-grid-wrap')?.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action="undo-complete"]');
-    if (!btn) return;
-    e.stopPropagation();
-    openCompletedInningSheet(parseInt(btn.dataset.inning, 10));
-  });
+  // Attached to document once (guarded) — survives refresh() without accumulating.
+  if (!window._undoCompleteListenerAdded) {
+    window._undoCompleteListenerAdded = true;
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="undo-complete"]');
+      if (!btn) return;
+      e.stopPropagation();
+      openCompletedInningSheet(parseInt(btn.dataset.inning, 10));
+    });
+  }
 
   // Lock / unlock inning.
   mountEl.querySelectorAll('[data-action="lock-inning"]').forEach((btn) => {
