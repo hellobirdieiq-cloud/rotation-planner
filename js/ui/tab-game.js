@@ -31,7 +31,6 @@ let viewModeRestored = false;
 // Collapsible-section state. null = uninitialized; once set, persists across refreshes.
 // Default rule: expanded before first Update Lineup; auto-collapsed after Update Lineup.
 let availabilityExpanded = null;
-let completedExpanded = false;
 export function mountGameTab(container) {
   mountEl = container;
   initPendingPresent();
@@ -162,20 +161,9 @@ function presentRowHtml(p) {
 }
 
 function renderInningCards(ag) {
-  const completedSet = new Set(ag.completedInnings || []);
-  const activeInnings = ag.schedule.filter((inn) => !completedSet.has(inn.index));
-  const completedInnings = ag.schedule.filter((inn) => completedSet.has(inn.index));
-  const toggleBtn = completedInnings.length > 0
-    ? `<button class="toggle-completed-btn" type="button" data-action="toggle-completed">${completedExpanded ? 'Hide' : 'Show'} completed (${completedInnings.length})</button>`
-    : '';
-  const completedCards = completedExpanded
-    ? `<div class="inning-columns">${completedInnings.map((inn) => renderInningCard(ag, inn)).join('')}</div>`
-    : '';
   return `
     <div id="warning-mount"></div>
-    <div class="inning-columns">${activeInnings.map((inn) => renderInningCard(ag, inn)).join('')}</div>
-    ${toggleBtn}
-    ${completedCards}
+    <div class="inning-columns">${ag.schedule.map((inn) => renderInningCard(ag, inn)).join('')}</div>
   `;
 }
 
@@ -210,9 +198,8 @@ function renderPlayerGrid(ag) {
       <tr${isCompleted ? ' class="player-grid-row-complete"' : ''}>
         <th scope="row" class="player-grid-name">
           <span class="player-grid-name-label">Inning ${inn.index + 1}</span>
-          ${isCompleted
-            ? `<button class="player-grid-name-status" type="button" data-action="undo-complete" data-inning="${inn.index}">✓ Complete</button>`
-            : `<button class="player-grid-end-btn${isLocked ? ' is-locked' : ''}" type="button" data-action="mark" data-inning="${inn.index}">${isLocked ? '🔒 ' : ''}Inning ${inn.index + 1} ›</button>`}
+          ${isCompleted ? '<span class="player-grid-name-status">✓ Complete</span>' : ''}
+          <button class="player-grid-end-btn${isLocked ? ' is-locked' : ''}" type="button" data-action="mark" data-inning="${inn.index}">${isLocked ? '🔒 ' : ''}Inning ${inn.index + 1} ›</button>
         </th>
         ${cells}
       </tr>
@@ -442,31 +429,10 @@ function bind() {
     btn.addEventListener('click', () => openInningSheet(parseInt(btn.dataset.inning, 10)));
   });
 
-  // Toggle completed innings section in cards view.
-  mountEl.querySelector('[data-action="toggle-completed"]')?.addEventListener('click', () => {
-    completedExpanded = !completedExpanded;
-    refresh();
-  });
-
-  // Mark / unmark complete.
+  // Mark / unmark complete (openInningSheet is completion-aware).
   mountEl.querySelectorAll('[data-action="mark"]').forEach((btn) => {
     btn.addEventListener('click', () => openInningSheet(parseInt(btn.dataset.inning, 10)));
   });
-  mountEl.querySelectorAll('[data-action="unmark"]').forEach((btn) => {
-    btn.addEventListener('click', () => handleUnmarkComplete(parseInt(btn.dataset.inning, 10)));
-  });
-
-  // Delegated listener for undo-complete on completed Inning Overview rows.
-  // Attached to document once (guarded) — survives refresh() without accumulating.
-  if (!window._undoCompleteListenerAdded) {
-    window._undoCompleteListenerAdded = true;
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-action="undo-complete"]');
-      if (!btn) return;
-      e.stopPropagation();
-      openCompletedInningSheet(parseInt(btn.dataset.inning, 10));
-    });
-  }
 
   // Lock / unlock inning.
   mountEl.querySelectorAll('[data-action="lock-inning"]').forEach((btn) => {
@@ -773,45 +739,31 @@ function handleUnlockInning(inningIdx) {
 function openInningSheet(inningIdx) {
   const ag = getActiveGame();
   if (!ag) return;
+  const isCompleted = (ag.completedInnings || []).includes(inningIdx);
   const isLocked = (ag.lockedInnings || []).includes(inningIdx);
   const num = inningIdx + 1;
+
+  const primaryAction = isCompleted
+    ? {
+        label: 'Undo Complete',
+        variant: '',
+        handler: () => { closeSheet(); handleUnmarkComplete(inningIdx); },
+      }
+    : {
+        label: `End Inning ${num}`,
+        variant: '',
+        handler: () => { closeSheet(); handleMarkComplete(inningIdx); },
+      };
 
   openSheet({
     title: `Inning ${num}`,
     content: '',
     actions: [
-      {
-        label: `End Inning ${num}`,
-        variant: '',
-        handler: () => { closeSheet(); handleMarkComplete(inningIdx); },
-      },
+      primaryAction,
       {
         label: isLocked ? `Unlock Inning ${num}` : `Lock Inning ${num}`,
         variant: '',
         handler: () => { closeSheet(); isLocked ? handleUnlockInning(inningIdx) : handleLockInning(inningIdx); },
-      },
-      {
-        label: 'Cancel',
-        variant: 'sheet-btn-cancel',
-        handler: () => closeSheet(),
-      },
-    ],
-  });
-}
-
-function openCompletedInningSheet(inningIdx) {
-  const ag = getActiveGame();
-  if (!ag) return;
-  const num = inningIdx + 1;
-
-  openSheet({
-    title: `Inning ${num} — Completed`,
-    content: '',
-    actions: [
-      {
-        label: 'Undo Complete',
-        variant: '',
-        handler: () => { closeSheet(); handleUnmarkComplete(inningIdx); },
       },
       {
         label: 'Cancel',
