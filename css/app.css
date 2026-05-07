@@ -1545,11 +1545,22 @@ body {
 .player-grid-name-status {
   display: block;
   margin-top: 4px;
+  padding: 10px 6px;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
   font-size: 11px;
   font-weight: 500;
   color: var(--color-text-tertiary);
   white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
 }
+.player-grid-name-status:active { background: var(--color-bg-secondary); }
 .player-grid-end-btn {
   display: none;
   margin-top: 4px;
