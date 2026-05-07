@@ -211,7 +211,7 @@ function renderPlayerGrid(ag) {
         <th scope="row" class="player-grid-name">
           <span class="player-grid-name-label">Inning ${inn.index + 1}</span>
           ${isCompleted
-            ? '<span class="player-grid-name-status">✓ Complete</span>'
+            ? `<button class="player-grid-name-status" type="button" data-action="undo-complete" data-inning="${inn.index}">✓ Complete</button>`
             : `<button class="player-grid-end-btn${isLocked ? ' is-locked' : ''}" type="button" data-action="mark" data-inning="${inn.index}">${isLocked ? '🔒 ' : ''}Inning ${inn.index + 1} ›</button>`}
         </th>
         ${cells}
@@ -454,6 +454,15 @@ function bind() {
   });
   mountEl.querySelectorAll('[data-action="unmark"]').forEach((btn) => {
     btn.addEventListener('click', () => handleUnmarkComplete(parseInt(btn.dataset.inning, 10)));
+  });
+
+  // Delegated listener for undo-complete on completed Inning Overview rows.
+  // Attached to .player-grid-wrap (recreated each render) to avoid listener accumulation on mountEl.
+  mountEl.querySelector('.player-grid-wrap')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="undo-complete"]');
+    if (!btn) return;
+    e.stopPropagation();
+    openCompletedInningSheet(parseInt(btn.dataset.inning, 10));
   });
 
   // Lock / unlock inning.
@@ -728,7 +737,6 @@ function handleMarkComplete(inningIdx) {
 }
 
 function handleUnmarkComplete(inningIdx) {
-  if (!confirm(`Unmark inning ${inningIdx + 1} as complete?`)) return;
   const ag = getActiveGame();
   if (!ag) return;
   const next = JSON.parse(JSON.stringify(ag));
@@ -778,6 +786,29 @@ function openInningSheet(inningIdx) {
         label: isLocked ? `Unlock Inning ${num}` : `Lock Inning ${num}`,
         variant: '',
         handler: () => { closeSheet(); isLocked ? handleUnlockInning(inningIdx) : handleLockInning(inningIdx); },
+      },
+      {
+        label: 'Cancel',
+        variant: 'sheet-btn-cancel',
+        handler: () => closeSheet(),
+      },
+    ],
+  });
+}
+
+function openCompletedInningSheet(inningIdx) {
+  const ag = getActiveGame();
+  if (!ag) return;
+  const num = inningIdx + 1;
+
+  openSheet({
+    title: `Inning ${num} — Completed`,
+    content: '',
+    actions: [
+      {
+        label: 'Undo Complete',
+        variant: '',
+        handler: () => { closeSheet(); handleUnmarkComplete(inningIdx); },
       },
       {
         label: 'Cancel',
